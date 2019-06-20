@@ -49,7 +49,7 @@ function MID_proof(m,s,alpha)
         println( sᵥ," ",V,"-students \t",sᵥ₋₁," ",V-1,"-students \t",sᵥ*V," ",V,"-shares \t",sᵥ₋₁*(V-1)," ",V-1,"-shares")
         println()
         println("SPLIT THE ",V-1," SHARES")
-        println("   ( ",Vshares," ",V,"-shares)  | (",num_small_shares," small",V-1,"-shares)      ( ",num_large_shares," large ",V-1,"-shares )    ")
+        println("   ( ",Vshares," ",V,"-shares)  | (",num_small_shares," small ",V-1,"-shares)      ( ",num_large_shares," large ",V-1,"-shares )    ")
         println("  ",alpha,"     ", x," | ", y,"          ",ybuddy,"  ", xbuddy,"              ",1-alpha)
         println()
         println("SPLIT THE ",V-1," SHARES AGAIN")
@@ -61,10 +61,12 @@ function MID_proof(m,s,alpha)
         I2=I1
         I3=num_large_shares
         X = perm(V-1,3)
+    #    display(X)
     #    println(X)
         possInd = Array{Int64}(undef,0)
         for i=1:length(X)
             A=X[i]
+    #        println("Test ",A,": ",A[1]*y+A[2]*1/2+A[3]*xbuddy, "<", m/s, " && ",A[1]*1/2+A[2]*ybuddy+A[3]*(1-alpha),">", m/s)
             if (A[1]*y+A[2]*1/2+A[3]*xbuddy < m/s) && (A[1]*1/2+A[2]*ybuddy+A[3]*(1-alpha)> m/s)
                 append!(possInd, i)
             end
@@ -83,15 +85,23 @@ function MID_proof(m,s,alpha)
 #print(size((ones(Int64,(col)))))
     matrix=[matrix; transpose(ones(Int64,(col)))]
 # print(size(matrix))
-
+    println("A:")
     display(matrix)
+
+
+
     m=Model(with_optimizer(GLPK.Optimizer))
     @variable(m, x[i=1:length(possInd)],Int)
     #print("size of x: ",size(x))
     b=[I1;I2;I3;S]
+    println("b: ",b)
     @constraint(m,con,matrix*x .==b)
     optimize!(m)
-    print(has_values(m))
+    if(!has_values(m))
+        println("No solution to this system on the Naturals: 𝛂 ≤ ",alpha)
+    else
+        println("This solution has a system on the Naturals: INCONCLUSIVE")
+    end
 end
 
 function MID(m,s,alpha)
@@ -173,11 +183,11 @@ function MID(m,s,alpha)
 end
 
 function perm(n,r)
-    A=Array{Int64,1}(undef,n*(r+2))
-    for i=1:n*(r+2)
+    A=Array{Int64,1}(undef,n*(n+1))
+    for i=1:length(A)
         A[i]=floor((i-1)/n)
     end
-#    print(A)
+    #print(A)
 
     X=(collect(multiset_permutations(A,3)))
 #    print(X)
