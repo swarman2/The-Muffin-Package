@@ -1,4 +1,4 @@
-COND(X,a,d)
+function COND(X,a,d)
     if a/3<=X && X<= min(a/2,(a+d)/4)
         return true
     else
@@ -6,8 +6,11 @@ COND(X,a,d)
     end
 end
 
-HBM(a,d,k)
-   possX = Array{Int64}(undef,0)
+function HBM(m,s)
+d = Int64(m-s)
+k =Int64( floor(s/(3d)))
+a=Int64(s-3d*k)
+   possX = Array{Rational}(undef,0)
     if d>=1 && k>=1 && a<=2*d && gcd(a,d)==1
         #10
         X=max((a+2d)//6,(2a-d)//3)
@@ -86,7 +89,7 @@ HBM(a,d,k)
         end
         #21
         if a>7d//5|| a<d
-            X=max((a+d)//5),(3a-2d)//4)
+            X=max((a+d)//5,(3a-2d)//4)
             if COND(X,a,d)
                 append!(possX,X)
             end
@@ -97,4 +100,24 @@ HBM(a,d,k)
         end
         X=minimum(possX)
         return (d*k+X)//(3*d*k+a)
+    end
 end
+function Phbm(m,s)
+    println("f(",m,", ",s,") ≤ ", HBM(m,s))
+end
+
+Phbm(25,22)
+Phbm(33,29)
+Phbm(34,31)
+Phbm(38,31)
+Phbm(43,35)
+Phbm(41,36)
+Phbm(43,40)
+Phbm(49,40)
+Phbm(45,41)
+Phbm(49,43)
+Phbm(55,48)
+Phbm(59,48)
+Phbm(52,49)
+Phbm(60,49)
+Phbm(57,50)
