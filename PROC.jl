@@ -1,5 +1,5 @@
-include("Combinatorics.jl-master/src/combinations.jl")
-include("Combinatorics.jl-master/src/partitions.jl")
+include("src/combinations.jl")
+include("src/partitions.jl")
 
 using JuMP
 using GLPK
