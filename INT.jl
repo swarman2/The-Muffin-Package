@@ -291,7 +291,7 @@ function INT(m,s)
       println()
 
  else
-   println("ERROR use FC")
+#   println("ERROR use FC")
  end
  #gap is within the maj-shares
 end
