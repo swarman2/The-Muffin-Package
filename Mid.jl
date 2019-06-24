@@ -187,15 +187,17 @@ end
 #(ex 2,3:
 #   [[0,0,2],[0,1,1],[0,2,0],[1,0,1],[1,1,0],[2,0,0]]
 #)
+
 function perm(n,r)
-    A=Array{Int64,1}(undef,n*(n+1))
+    A=Array{Int64,1}(undef,r*(n+1))
     for i=1:length(A)
-        A[i]=floor((i-1)/n)
+        A[i]=floor((i-1)/r)
     end
-    #print(A)
+#    print(A)
 
     X=(collect(multiset_permutations(A,r)))
-#    print(X)
+#    display(X)
+#    println("********************")
     X=filter(x->sum(x)==n,X)
     return X
 

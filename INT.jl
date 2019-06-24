@@ -211,7 +211,7 @@ function VINT(m,s,alpha)
 end
 
 function INT(m,s)
- println("m: ",m," s: ",s)
+ #println("m: ",m," s: ",s)
  V,sᵥ,sᵥ₋₁=SV(m,s)
  Vshares=V*sᵥ
  V₋₁shares=(V-1)*sᵥ₋₁
@@ -248,7 +248,7 @@ function INT(m,s)
        if(alpha<1//3)
          alpha=1//3
        end
-       println("alpha: ",alpha)
+       return (alpha)
       # VINT_proof(m,s,alpha)
      else
       println("DK m:",m," s:",s)
@@ -283,7 +283,7 @@ function INT(m,s)
        if(alpha<1//3)
          alpha=1//3
        end
-       println("alpha: ",alpha)
+       return (alpha)
       # VINT_proof(m,s,alpha)
      else
       println("DK m:",m," s:",s)
@@ -297,24 +297,24 @@ function INT(m,s)
 end
 
 #VINT_proof(10,9,1//3)
-INT(10,9)
+#INT(10,9)
 #VINT(24,11,19//44)
-INT(24,11)
+#INT(24,11)
 #VINT_proof(16,13,14//39)
-INT(16,13)
+#INT(16,13)
 #VINT(24,11,19//44) #copy
 #VINT(59,14,131//280)
-INT(59,14)
+#INT(59,14)
 #VINT_proof(17,15,7//20)
 #println()
-INT(17,15)
+#INT(17,15)
 #VINT_proof(19,17,1//3)
-INT(19,17)
+#INT(19,17)
 #VINT(21,17,6//17)
-INT(21,17)
+#INT(21,17)
 #VINT(21,19,13//38)
-INT(21,19)
+#INT(21,19)
 #VINT_proof(61,19,313//684)
-INT(61,19)
+#INT(61,19)
 #VINT(33,20,41//100)
-INT(33,20)
+#INT(33,20)
