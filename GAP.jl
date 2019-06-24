@@ -1,13 +1,17 @@
-
+include("HALF.jl") #for SV and FINDEND
+include("src\\permutations.jl") #for multiset_permutations
+using JuMP
+using GLPK
 function perm(n,r)
-    A=Array{Int64,1}(undef,n*(n+1))
+    A=Array{Int64,1}(undef,r*(n+1))
     for i=1:length(A)
-        A[i]=floor((i-1)/n)
+        A[i]=floor((i-1)/r)
     end
-    #print(A)
+#    print(A)
 
     X=(collect(multiset_permutations(A,r)))
-#    print(X)
+#    display(X)
+#    println("********************")
     X=filter(x->sum(x)==n,X)
     return X
 
@@ -38,59 +42,13 @@ function GAP_proof(m,s,alpha)
         println("   ( ",num_small_shares," " ,V,"-shares)           (",Int64(num_large_shares/2)," large ",V,"-shares |  ",Int64(num_large_shares/2)," large ",V,"-shares)    ")
         println("  ",alpha,"     ", ybuddy,"     ", xbuddy,"          1/2      ",x)
         println()
-        endpoints=Array{Rational}(undef,0)
-        append!(endpoints, [alpha ybuddy xbuddy 1//2 1//2 x])
-        I1=num_small_shares
-        I2=Int64(num_large_shares/2)
-        I3=I2
-        numIntervals=3
-        X = collect(partitions(V,numIntervals))
-
-        possInd = Array{Int64}(undef,0)
-        for i=1:length(X)
-            A=X[i]
-            if (A[1]*alpha+A[2]*xbuddy+A[3]*1//2 < m/s) && (A[1]*ybuddy+A[2]*1/2+A[3]*x> m/s)
-                append!(possInd, i)
-            end
-        end
         S=sᵥ
-        matrix=(X[possInd[1]])
+        shares=Vshares
+        VV=V #which is split
+        endpoints=Array{Rational,2}(undef,0,0)
+        endpoints =  [alpha ybuddy]
+        endpoints = [endpoints; [xbuddy 1//2]; [1//2 x]]
 
-        for i=2:length(possInd)
-            Y=(X[possInd[i]])
-
-            matrix=[matrix Y]
-        end
-
-        row,col=size(matrix)
-
-        matrix=[matrix; transpose(ones(Int64,(col)))]
-
-        println("A:")
-        display(matrix)
-
-
-
-        m=Model(with_optimizer(GLPK.Optimizer))
-        @variable(m, x[i=1:length(possInd)],Int)
-
-        b=[I1;I2;I3;S]
-        println("b: ",b)
-        @constraint(m,con,matrix*x .==b)
-        optimize!(m)
-        if(!has_values(m))
-            println("No solution to this system on the Naturals: 𝛂 ≤ ",alpha)
-        else
-            potInt = Array{Ratinal}(undef,0)
-            for targetInterval=1: numIntervals
-                for i in possInd
-                    if(X[i][targetInterval]!=0)
-
-                    end
-                end
-                println()
-            end
-        end
     else
         num_small_shares = V₋₁shares-Vshares
         num_large_shares =   Vshares
@@ -105,24 +63,53 @@ function GAP_proof(m,s,alpha)
         println("    (",Int64(num_small_shares/2),"  ",V-1,"-shares | ",Int64(num_small_shares/2),"  ",V-1,"-shares)      ( ",num_large_shares," large ",V-1,"-shares )    ")
         println("     ", y,"    1/2 ", ybuddy,"          ",xbuddy, "        ",1-alpha)
         println()
-
+        S=sᵥ₋₁
+        shares=V₋₁shares
+        VV=V-1 #which is split
         endpoints =Array{Rational, 2}(undef,0,0)
         endpoints =[y 1//2]
         endpoints = [endpoints;[1//2 ybuddy]; [xbuddy (1-alpha)]]
-        sharesInIntervals = Array{Int64}(undef,0)
-        append!(sharesInIntervals, [Int64(num_small_shares/2) Int64(num_small_shares/2) num_large_shares])
-        numIntervals = length(sharesInIntervals)
-        for i = 1:numIntervals
-            print(endpoints[i,:])
-            println("  ",sharesInIntervals[i])
-        end
-        X = perm(V-1, numIntervals)
+    #    sharesInIntervals = Array{Int64}(undef,0)
+    #    append!(sharesInIntervals, [Int64(num_small_shares/2) Int64(num_small_shares/2) num_large_shares])
+
+    #    for i = 1:numIntervals
+    #        print(endpoints[i,:])
+    #        println("  ",sharesInIntervals[i])
+    #    end
+end #******************************end else
+while true
+        row, col= size(endpoints)
+        numIntervals = row
+        X = perm(VV, numIntervals)
         possInd = Array{Int64}(undef,0)
+    #    for i=1:length(X)
+    #        A=X[i]
+    #        if (A[1]*y+A[2]*1//2+A[3]*xbuddy < m/s) && (A[1]*1//2+A[2]*ybuddy+A[3]*(1-alpha)> m/s)
+    #            append!(possInd, i)
+    #        end
+    #    end
+    println("Endpoints: ")
+    display(endpoints)
         for i=1:length(X)
             A=X[i]
-            if (A[1]*y+A[2]*1//2+A[3]*xbuddy < m/s) && (A[1]*1//2+A[2]*ybuddy+A[3]*(1-alpha)> m/s)
+            sum_1=0
+            sum_2=0
+            for j =1:numIntervals
+                sum_1=sum_1+A[j]*endpoints[j,1]
+                sum_2=sum_2+A[j]*endpoints[j,2]
+            end
+
+    #            println("******************",sum_1,"   ",sum_2,"    m/s: ",m//s)
+
+            if (sum_1 < m//s) && (sum_2 > m//s)
+    #             println("############################",sum_1,"   ",sum_2,"    m/s: ",m//s)
+            #    println(sum_1,"   ",sum_2,"    m/s: ",m//s)
                 append!(possInd, i)
             end
+        end
+        println("Possible distributions of muffins: ")
+        for i in possInd
+            println(X[i,:])
         end
         #find gaps
         """
@@ -138,6 +125,7 @@ function GAP_proof(m,s,alpha)
         """
         lowerbound = 0
         upperbound = 0
+        _gap=false
         for j=1:numIntervals
             lowerbound=endpoints[j,1]
             upperbound=endpoints[j,2]
@@ -160,7 +148,7 @@ function GAP_proof(m,s,alpha)
                     end
                     lowerbound_temp=m//s-sum
                 #    println("lowerbound_temp = ", lowerbound_temp)
-                    if lowerbound_temp>lowerbound
+                    if lowerbound_temp>lowerbound && lowerbound_temp < endpoints[j,2]
                         lowerbound=lowerbound_temp
                     end
                     #upper bound
@@ -171,24 +159,17 @@ function GAP_proof(m,s,alpha)
                         end
                     end
                     upperbound_temp=m//s-sum
-                    if upperbound_temp <upperbound
+                    if upperbound_temp <upperbound && upperbound_temp > endpoints[j,1]
                         upperbound = upperbound_temp
                     end
                 end #end if(X[i][j]!=0)
             end  #end  for i in possInd
         #    println()
-        #    println("For I[",j,"]   lower = ",lowerbound," upper = ",upperbound)
+    #        println("For I[",j,"]   lower = ",lowerbound," upper = ",upperbound)
         #    println()
             if(lowerbound>upperbound && lowerbound>endpoints[j,1] && upperbound < endpoints[j,2])
-                endpointsArray=Array{Rational,1}(undef,0)
-                row,col=size(endpoints)
-                for i=1:row
-                    for j=1:col
-                        append!(endpointsArray, endpoints[i,j])
-                    end
-                end
-                append!(endpointsArray, upperbound)
-                append!(endpointsArray, lowerbound)
+    #                println("For I[",j,"]   lower = ",lowerbound," upper = ",upperbound)
+                _gap=true
                 endpoints=[endpoints; lowerbound upperbound; (1-lowerbound) (1-upperbound)]
         #        display(endpoints)
                 endpoints=sort(collect(Iterators.flatten(endpoints)))
@@ -202,9 +183,18 @@ function GAP_proof(m,s,alpha)
                 #endpoints = reshape(endpointsArray,2)
             end #end if(lowerbound>upperbound)
         end #end for j=1:numIntervals
+        println("Endpoints: ")
         display(endpoints)
-        X = perm(V-1, numIntervals)
+        println()
+        if(_gap==false)
+            println("No gaps found")
+            println("alpha could be greater than ",alpha)
+            return
+        end
+        X = perm(VV, numIntervals)
         possInd = Array{Int64}(undef,0)
+    #    display(X)
+    #find possible students
         for i=1:length(X)
             A=X[i]
             sum_1=0
@@ -214,17 +204,73 @@ function GAP_proof(m,s,alpha)
                 sum_2=sum_2+A[j]*endpoints[j,2]
             end
 
+        #       println("******************",sum_1,"   ",sum_2,"    m/s: ",m//s)
+
             if (sum_1 < m//s) && (sum_2 > m//s)
-                println(sum_1,"   ",sum_2,"    m/s: ",m//s)
+        #               println("############################",sum_1,"   ",sum_2,"    m/s: ",m//s)
+            #    println(sum_1,"   ",sum_2,"    m/s: ",m//s)
                 append!(possInd, i)
             end
         end
+        mat_1=reshape([],0,2)
+        if length(possInd)==0
+            println("No possible muffin distributions")
+            println("alpha ≤ ",alpha)
+            return
+        end
+        println("Possible muffin distributions")
         for i in possInd
-            println(X[i,:])
+            if i == possInd[1]
+                mat_1=X[i,:]
+            else
+                mat_1=[mat_1; X[i,:]]
+            end
+            #println(X[i,:])
         end
 
 
-    end
+        mat_1 = transpose(reshape(hcat(mat_1...), (length(mat_1[1]), length(mat_1))))
+        display(mat_1)
+        mat_2=[(mat_1[:,1]-mat_1[:,4]);(mat_1[:,2]-mat_1[:,3])]
+        mat_2=reshape(mat_2,Int64(length(mat_2)/2),2)
+        mat_2=transpose(mat_2)
+        row,col=size(mat_2)
+        Sum=(mat_1[:,1]+mat_1[:,2]+mat_1[:,3]+mat_1[:,4])'
+        mat_2=vcat(mat_2, Sum)
+        Ones=(ones(Int64,col))'
+        mat_2=vcat(mat_2, Ones)
+
+        #display(mat_2)
+
+
+        model=Model(with_optimizer(GLPK.Optimizer))
+        @variable(model, x[i=1:length(possInd)],Int)
+    #    @variable(m, x[i=1:3],Int)
+    #    print("size of x: ",size(x))
+    #    mat_2=[1 -2 -3; 1 2 1]
+        println("System of equations (=[0,0;",shares,";",S,"])")
+        display(mat_2)
+        b=[0;0;shares;S]
+        @constraint(model,con,mat_2*x .==b)
+        optimize!(model)
+        if(has_values(model))
+        #    println("There is a solution on the Naturals")
+        #    println("alpha could be greater than ",alpha)
+        else
+            println("No solution on the Naturals")
+            println("alpha ≤ ",alpha)
+            return
+        end
 end
 
-GAP_proof(31,19,54//133)
+
+#    end
+end
+
+#GAP_proof(31,19,54//133)
+#GAP_proof(41,19,131//304)
+#GAP_proof(59,22,167//374)
+#GAP_proof(41,23,149//368)
+#GAP_proof(54,25,151//350)
+GAP_proof(67,25,223//500)
+#GAP_proof(59,26,191//442)
