@@ -211,5 +211,5 @@ end
 
 
 
-#println(VHALF(11,5,13//30))
+#(Half_proof(11,5,13//30))
 #println(VHALF(45,26,32/78))

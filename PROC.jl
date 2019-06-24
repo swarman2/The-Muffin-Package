@@ -13,16 +13,13 @@ println("Procedure for f(",m,", ",s,") ≥ ",alphaa)
   denom=denominator(alphaa)
   denom=lcm(s,denom)
   lower_bound = alphaa
-  upper_bound = 1 - alphaa
+  upper__bound = (1 - alphaa)
 
-  upper_bound_num = upper_bound * denom
+  upper_bound_num = upper__bound * denom
   lower_bound_num = lower_bound * denom
 
-  if upper_bound_num - lower_bound_num < 2
-    B = collect(lower_bound_num:1:upper_bound_num + 1)
-  else
+
     B = collect(lower_bound_num:1:upper_bound_num)
-  end
 
   A = Array{Int64,1}(undef,0)
   min_length=floor(((denom))/maximum(B))
@@ -49,20 +46,21 @@ println("Procedure for f(",m,", ",s,") ≥ ",alphaa)
   end
 
 
-  shape_1 = Int64(length(A)/length(B))
-  mat_1 = (reshape(A,length(B),shape_1))
+  shape_1 = Int64(length(A)/(length(B)))
+  mat_1 = (reshape(A,(length(B)),shape_1))
   mat_1=unique(mat_1,dims=2)
 
-  student_muiltiset_sum = ((m/s)*denom)
+
+  student_muiltiset_sum = ((m//s)*denom)
 
   AA = Array{Int64,1}(undef,0)
 
   min_length=floor(((m/s)*denom)/maximum(B))
   max_length=ceil(((m/s)*denom)/minimum(B))
-  comp_stu = (collect(partitions(Int64((m/s)*denom),Int64(min_length))))
+  comp_stu = (collect(partitions(Int64((m//s)*denom),Int64(min_length))))
 
   for i=min_length+1:max_length
-      append!(comp_stu,(collect(partitions(Int64((m/s)*denom),Int64(i)))))
+      append!(comp_stu,(collect(partitions(Int64((m//s)*denom),Int64(i)))))
   end
 
   for i = 1:length(comp_stu)
@@ -80,8 +78,10 @@ println("Procedure for f(",m,", ",s,") ≥ ",alphaa)
      end
   end
 
-  shape_2 = Int64(length(AA)/length(B))
-  mat_2 = (reshape(AA,length(B),shape_2))
+
+
+  shape_2 = Int64(length(AA)/(length(B)))
+  mat_2 = (reshape(AA,(length(B)),shape_2))
   mat_2=unique(mat_2,dims=2)
 
 
@@ -141,7 +141,12 @@ println("Procedure for f(",m,", ",s,") ≥ ",alphaa)
  println()
  println()
 end
+for k=1:20
+    println("*********  k = ",k,"  ********* ")
+    PROC(3k+3,3k+2,((k+1)//(3k+2)))
+end
 
-PROC(5,3,5//12)
-PROC(13,5,13//30)
-PROC(17,15,7//20)
+
+#PROC(5,3,5//12)
+#PROC(13,5,13//30)
+#PROC(17,15,7//20)
