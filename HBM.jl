@@ -7,6 +7,9 @@ function COND(X,a,d)
 end
 
 function HBM(m,s)
+    if m%s == 0
+      return 1
+    end
 d = Int64(m-s)
 k =Int64( floor(s/(3d)))
 a=Int64(s-3d*k)
@@ -95,7 +98,7 @@ a=Int64(s-3d*k)
             end
         end
         if length(possX)==0
-            println("No possible X")
+            #println("No possible X")
             return 1
         end
         X=minimum(possX)

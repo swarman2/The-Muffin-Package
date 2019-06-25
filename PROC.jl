@@ -5,6 +5,7 @@ using JuMP
 using GLPK
 
 function VProc(m,s,alphaa)
+
     num=numerator(alphaa)
     denom=denominator(alphaa)
     denom=lcm(s,denom)
@@ -20,6 +21,7 @@ function VProc(m,s,alphaa)
     A = Array{Int64,1}(undef,0)
     min_length=floor(((denom))/maximum(B))
     max_length=ceil(((denom))/minimum(B))
+
     comp_muf = (collect(partitions(Int64(denom),Int64(min_length))))
 
     for i=min_length+1:max_length
@@ -53,12 +55,50 @@ function VProc(m,s,alphaa)
 
     min_length=floor(((m/s)*denom)/maximum(B))
     max_length=ceil(((m/s)*denom)/minimum(B))
-    comp_stu = (collect(partitions(Int64((m//s)*denom),Int64(min_length))))
+    V=Int64(ceil(2m/s))
 
-    for i=min_length+1:max_length
-        append!(comp_stu,(collect(partitions(Int64((m//s)*denom),Int64(i)))))
+    tempB = B
+    for i=1:V
+        tempB=[tempB B]
     end
+#print("1  ")
+     #comp_stu = (collect(partitions(Int64((m//s)*denom),Int64(min_length))))
+   comp_stu = (collect(multiset_combinations(tempB,Int64(V))))
+   #for i=min_length+1:max_length
+       append!(comp_stu,(collect(multiset_combinations(tempB,Int64(V-1)))))
+   #end
+   #  for i=min_length+1:max_length
+   #      append!(comp_stu,(collect(partitions(Int64((m//s)*denom),Int64(i)))))
+    # end
+     #println("test0")
+     matrix=Vector{Vector{Int64}}()
 
+     for i=1:length(comp_stu)
+        push!(matrix, comp_stu[i])
+     end
+
+      # display(matrix)
+     comp_stu=matrix
+     #print(" 1.5   ")
+     for i = 1:length(comp_stu)
+        for j = 1:length(comp_stu[i])
+
+            vec_1 = comp_stu[i]
+            #filter_1 = filter(x -> (x >= minimum(B) && x <= maximum(B)), vec_1)
+            if(sum(vec_1)==(m//s)*denom)
+                filter_1=vec_1
+            #filter_1=filter(x -> (sum(vec_1) .== (m//s)*denom),vec_1)
+
+        #    if length(filter_1) == length(vec_1)
+               for low_upp = lower_bound_num:upper_bound_num
+                   count_elem = count(i -> (i==low_upp),filter_1)
+                   append!(AA,count_elem)
+
+               end
+            end
+        end
+     end
+#println("2")
     for i = 1:length(comp_stu)
        for j = 1:length(comp_stu[i])
            vec_1 = comp_stu[i]
@@ -111,10 +151,14 @@ function VProc(m,s,alphaa)
         return true
     end
 end
+
+
 function PROC(m,s,alphaa)
-
 println("Procedure for f(",m,", ",s,") ≥ ",alphaa)
-
+if m%s == 0
+    println("s divides m, give all students whole muffin(s)")
+  return 1
+end
   num=numerator(alphaa)
   denom=denominator(alphaa)
   denom=lcm(s,denom)
@@ -125,11 +169,12 @@ println("Procedure for f(",m,", ",s,") ≥ ",alphaa)
   lower_bound_num = lower_bound * denom
 
 
-    B = collect(lower_bound_num:1:upper_bound_num)
+  B = collect(lower_bound_num:1:upper_bound_num)
 
   A = Array{Int64,1}(undef,0)
   min_length=floor(((denom))/maximum(B))
   max_length=ceil(((denom))/minimum(B))
+  println(min_length,"  ",max_length)
   comp_muf = (collect(partitions(Int64(denom),Int64(min_length))))
 
   for i=min_length+1:max_length
@@ -163,18 +208,42 @@ println("Procedure for f(",m,", ",s,") ≥ ",alphaa)
 
   min_length=floor(((m/s)*denom)/maximum(B))
   max_length=ceil(((m/s)*denom)/minimum(B))
-  comp_stu = (collect(partitions(Int64((m//s)*denom),Int64(min_length))))
+ #println(min_length,"  ",max_length)
+ V=Int64(ceil(2m/s))
 
-  for i=min_length+1:max_length
-      append!(comp_stu,(collect(partitions(Int64((m//s)*denom),Int64(i)))))
+ tempB = B
+ for i=1:V
+     tempB=[tempB B]
+ end
+
+  #comp_stu = (collect(partitions(Int64((m//s)*denom),Int64(min_length))))
+comp_stu = (collect(multiset_combinations(tempB,Int64(V))))
+#for i=min_length+1:max_length
+    append!(comp_stu,(collect(multiset_combinations(tempB,Int64(V-1)))))
+#end
+#  for i=min_length+1:max_length
+#      append!(comp_stu,(collect(partitions(Int64((m//s)*denom),Int64(i)))))
+ # end
+  #println("test0")
+  matrix=Vector{Vector{Int64}}()
+
+  for i=1:length(comp_stu)
+     push!(matrix, comp_stu[i])
   end
 
+    display(matrix)
+  comp_stu=matrix
   for i = 1:length(comp_stu)
      for j = 1:length(comp_stu[i])
-         vec_1 = comp_stu[i]
-         filter_1 = filter(x -> (x >= minimum(B) && x <= maximum(B)), vec_1)
 
-         if length(filter_1) == length(vec_1)
+         vec_1 = comp_stu[i]
+         println(vec_1)
+         #filter_1 = filter(x -> (x >= minimum(B) && x <= maximum(B)), vec_1)
+        if(sum(vec_1)==(m//s)*denom)
+            filter_1=vec_1
+         #filter_1=filter(x -> (sum(vec_1) .== (m//s)*denom),vec_1)
+
+    #     if length(filter_1) == length(vec_1
             for low_upp = lower_bound_num:upper_bound_num
                 count_elem = count(i -> (i==low_upp),filter_1)
                 append!(AA,count_elem)
@@ -185,11 +254,11 @@ println("Procedure for f(",m,", ",s,") ≥ ",alphaa)
   end
 
 
-
+#println("test")
   shape_2 = Int64(length(AA)/(length(B)))
   mat_2 = (reshape(AA,(length(B)),shape_2))
   mat_2=unique(mat_2,dims=2)
-
+  display(mat_2)
 
   final_mat = [mat_1 (-mat_2)]
 
@@ -208,13 +277,16 @@ println("Procedure for f(",m,", ",s,") ≥ ",alphaa)
 
   c = zeros(Int64,row_1)
   final_mat_2 = [c;m;s]
-
+  #display(final_mat)
+  #println("*********")
+  #display(final_mat_2)
+#println("test2")
   model=Model(with_optimizer(GLPK.Optimizer))
   @variable(model, x[i=1:col_1+col_2],Int)
   @constraint(model,con_1,x.>=0)
   @constraint(model,con_2,final_mat*x .==final_mat_2)
   optimize!(model)
-
+#println("test3")
   if(!has_values(model))
       println("No procedure found")
       return false

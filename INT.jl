@@ -1,6 +1,10 @@
-include("HALF.jl")
+include("helper_functions.jl")
 
 function VINT_proof(m,s,alpha)
+  if m%s == 0
+    println("s divides m, give all students whole muffin(s)")
+    return 1
+  end
  println()
  println()
  V,sᵥ,sᵥ₋₁=SV(m,s)
@@ -122,6 +126,9 @@ function VINT_proof(m,s,alpha)
 end
 
 function VINT(m,s,alpha)
+  if m%s == 0
+    return 1
+  end
  V,sᵥ,sᵥ₋₁=SV(m,s)
  Vshares=V*sᵥ
  V₋₁shares=(V-1)*sᵥ₋₁
@@ -211,16 +218,20 @@ function VINT(m,s,alpha)
 end
 
 function INT(m,s)
+  if m%s == 0
+    return 1
+  end
  #println("m: ",m," s: ",s)
  V,sᵥ,sᵥ₋₁=SV(m,s)
  Vshares=V*sᵥ
  V₋₁shares=(V-1)*sᵥ₋₁
  alphaPoss= Array{Rational}(undef, V+1)#declare a 1 d array
  for i =1:V+1
-   alphaPoss[i]=Inf
+   alphaPoss[i]=1
  end
- alphaPoss[1]=0
+
  if(V₋₁shares<Vshares)
+
    #split the V shares
    num_small_shares= V₋₁shares
    num_large_shares = Vshares-num_small_shares
@@ -232,28 +243,25 @@ function INT(m,s)
    #m//s >= (1-y)*(V-min_large) + x*min_large
    #
    j=1
-  for i=0:V
+      for i=0:V
+        min_large=V -i
+        alpha=(m//s + V + (m*V)//s - V*V -min_large - (2*(min_large)*m)//s+V*min_large)//(-V*V + 2*V - min_large)
+        alphaPrime = (m//s + (m*min_large)//s - min_large)//(V-2*min_large+V*min_large)
+        alpha = min(alpha,alphaPrime)
+        if(VINT(m,s,alpha)==true)
+          alphaPoss[j]=alpha
+          j=j+1
+        end
+      end
 
-      min_large=V -i
-      alpha=(m//s + V + (m*V)//s - V*V -min_large - (2*(min_large)*m)//s+V*min_large)//(-V*V + 2*V - min_large)
-      alphaPrime = (m//s + (m*min_large)//s - min_large)//(V-2*min_large+V*min_large)
-      alpha = min(alpha,alphaPrime)
-      if(VINT(m,s,alpha)==true)
-        alphaPoss[j]=alpha
-        j=j+1
-       end
-       end
-     if(alphaPoss[1]!=0)
        alpha = minimum(alphaPoss)
        if(alpha<1//3)
          alpha=1//3
        end
        return (alpha)
       # VINT_proof(m,s,alpha)
-     else
-      println("DK m:",m," s:",s)
-     end
-      println()
+
+    #  println()
 
  elseif(V₋₁shares>Vshares)
    #(    )      (    )       (    )
@@ -262,6 +270,7 @@ function INT(m,s)
    #y = m//s - (1-alpha)*(V-2)
    #m//s >= (1-y)*(V-1-min_large) + (1-alpha)*min_large
    #
+
    num_large_shares = Vshares
    min_large=Int64(floor(num_large_shares/sᵥ₋₁))
    min_large_og = min_large
@@ -277,21 +286,16 @@ function INT(m,s)
        alphaPoss[j]=alpha
        j=j+1
      end
-  end
-     if(alphaPoss[1]!=0)
+   end
+
        alpha = minimum(alphaPoss)
        if(alpha<1//3)
          alpha=1//3
        end
        return (alpha)
       # VINT_proof(m,s,alpha)
-     else
-      println("DK m:",m," s:",s)
-     end
-      println()
-
- else
-#   println("ERROR use FC")
+    else
+      return 1
  end
  #gap is within the maj-shares
 end

@@ -5,12 +5,12 @@ include("helper_functions.jl")
 #from pg 70
 function VHALF(m,s,𝛂)
   if 𝛂<1//3
-    println("Bad input")
+    #println("Bad input")
     return false
   end
   if 𝛂 >1//2
-    println("𝛂 > 1//2 is a bad guess, please rethink")
-    exit(0)
+  #  println("𝛂 > 1//2 is a bad guess, please rethink")
+    return false
   end
   (V,sᵥ, sᵥ₋₁)=SV(m,s)
   (x,y)=FINDEND(m,s,𝛂, V)
@@ -52,8 +52,8 @@ function HALF(m,s)
       return alpha
     end
   else
-    println("Not a useful answer")
-    return 0
+  #  println("Not a useful answer")
+    return 1
   end
 end
 
@@ -63,6 +63,7 @@ function Half_proof(m,s,alpha)
     println("𝛂 > 1//2 is a bad guess, please rethink")
     exit(0)
   end
+
   V =Int64( ceil(2*m/s))
   x,y=FINDEND(m,s,alpha,V)
   if x == 1-alpha || y == alpha

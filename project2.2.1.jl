@@ -4,6 +4,7 @@ include("HALF.jl")
 include("INT.jl")
 include("EBM.jl")
 include("HBM.jl")
+include("helper_functions.jl")
 println()
 
 function FIND_ALPHA(m,s)
@@ -16,11 +17,14 @@ function FIND_ALPHA(m,s)
 
 alphas = [FC_alpha INT_alpha HALF_alpha EBM_alpha HBD_alpha]
 min_alpha = minimum(alphas)
+ #println(min_alpha)
+if min_alpha ==1
+   print("   ",m,"   |   ",s,"   |  trivial   |  = ",1)
 
-println("   M   |   S   |   Method   |      α   ")
-println("---------------------------------------")
+#println("   M   |   S   |   Method   |      α   ")
+#println("---------------------------------------")
 
-if      FC_alpha <= min_alpha
+elseif      FC_alpha <= min_alpha
 
         if VProc(m,s,FC_alpha)
            print("   ",m,"   |   ",s,"   |     FC     |  = ",FC_alpha,"")
@@ -69,4 +73,15 @@ elseif HBD_alpha <= min_alpha
        end
 
 end
+end
+
+
+
+println("   M   |   S   |   Method   |      α   ")
+println("---------------------------------------")
+for s = 5:60
+   for m = s+1:70
+      FIND_ALPHA(m,s)
+      println()
+   end
 end

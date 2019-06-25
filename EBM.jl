@@ -2,6 +2,9 @@ function EBM(m::Int,s::Int)
     if ceil(2m/s)>=4
         return 1
     end
+    if m%s == 0
+      return 1
+    end
     d = Int64(m-s)
     k =Int64( floor(s/(3d)))
     a=Int64(s-3d*k)
