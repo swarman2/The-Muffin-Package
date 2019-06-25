@@ -57,3 +57,55 @@ function print_Intervals(m,s,alpha)
     end
     return endpoints
 end
+function perm(n,r)
+    A=Array{Int64,1}(undef,r*(n+1))
+    for i=1:length(A)
+        A[i]=floor((i-1)/r)
+    end
+#    print(A)
+
+    X=(collect(multiset_permutations(A,r)))
+#    display(X)
+#    println("********************")
+    X=filter(x->sum(x)==n,X)
+    return X
+
+end
+
+#SV takes m,s as input and returns
+#V, sᵥ, and sᵥ₋₁
+#using the V-Conjecture (pg 66) and
+#a linear function from pg 68
+#gotten by solving the system:
+#   Vsᵥ + (V-1)(sᵥ₋₁) = pieces = 2m
+#   sᵥ + sᵥ₋₁ = s
+
+function SV(m,s)
+  V=Int64(ceil(2*m/s))
+  sᵥ₋₁=V*s-2*m
+  sᵥ = 2*m - s*(V-1)
+  return V, sᵥ,sᵥ₋₁
+end
+
+#FINDEND input m,s alpha and V
+#this returns x and y where all V shares are in
+#the interval (𝛂, x) and all V-1 shares are in the
+#interval (y, 1-𝛂)
+#This is adapted from psudocode on page 69
+function FINDEND(m,s,alpha,V)
+  y=m//s -(1-alpha)*(V-2)
+  if y>= (1-alpha)
+    y=1-alpha
+  end
+  if y <= alpha
+    y=alpha
+  end
+  x=m//s - alpha*(V-1)
+  if x<=alpha
+    x=alpha
+  end
+  if x>= (1-alpha)
+    x=1-alpha
+  end
+  return x,y
+end
