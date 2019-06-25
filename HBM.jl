@@ -96,28 +96,29 @@ a=Int64(s-3d*k)
         end
         if length(possX)==0
             println("No possible X")
-            return Inf
+            return 1
         end
         X=minimum(possX)
         return (d*k+X)//(3*d*k+a)
     end
+    return 1
 end
-function Phbm(m,s)
-    println("f(",m,", ",s,") ≤ ", HBM(m,s))
-end
+#function Phbm(m,s)
+#    println("f(",m,", ",s,") ≤ ", HBM(m,s))
+#end
 
-Phbm(25,22)
-Phbm(33,29)
-Phbm(34,31)
-Phbm(38,31)
-Phbm(43,35)
-Phbm(41,36)
-Phbm(43,40)
-Phbm(49,40)
-Phbm(45,41)
-Phbm(49,43)
-Phbm(55,48)
-Phbm(59,48)
-Phbm(52,49)
-Phbm(60,49)
-Phbm(57,50)
+#Phbm(25,22)
+#Phbm(33,29)
+#Phbm(34,31)
+#Phbm(38,31)
+#Phbm(43,35)
+#Phbm(41,36)
+#Phbm(43,40)
+#Phbm(49,40)
+#Phbm(45,41)
+#Phbm(49,43)
+#Phbm(55,48)
+#Phbm(59,48)
+#Phbm(52,49)
+#Phbm(60,49)
+#Phbm(57,50)
