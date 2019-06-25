@@ -2,7 +2,7 @@
 # !!ASSUMES MID DID NOT WORK!!
 ##############################
 
-
+include("helper_functions.jl")
 include("HALF.jl") #for SV and FINDEND
 include("src\\permutations.jl") #for multiset_permutations
 using JuMP
@@ -30,31 +30,14 @@ function GAP_proof(m,s,alpha)
 
     xbuddy = 1-x
     ybuddy = 1-y
+    print_Intervals(m,s,alpha)
     if(V₋₁shares<Vshares)
-         #___(_______)________(_____)___|___(_____)____
-         #alpha   y-buddy   xbuddy   x  |   y    1-alpha
-         #smallShare is an array that holds the possiblities for number of small shares
          num_small_shares = V₋₁shares
         num_large_shares = Vshares - V₋₁shares
-        println("m  = ",m,"  s = ", s)
-        println( sᵥ," ",V,"-students \t",sᵥ₋₁," ",V-1,"-students \t",sᵥ*V," ",V,"-shares \t",sᵥ₋₁*(V-1)," ",V-1,"-shares")
-        println()
-        println("SPLIT THE ",V," SHARES")
-        println("   ( ",num_small_shares," small ",V,"-shares)   (",num_large_shares," large ",V,"-shares)   |   ( ",V₋₁shares,"  ",V-1,"-shares )    ")
-        println("  ",alpha,"     ", ybuddy,"  ", xbuddy,"          ",x," | ", y,"              ",1-alpha)
-        println()
-        println("SPLIT THE ",V," SHARES AGAIN")
-        println("   ( ",num_small_shares," " ,V,"-shares)           (",Int64(num_large_shares/2)," large ",V,"-shares |  ",Int64(num_large_shares/2)," large ",V,"-shares)    ")
-        println("  ",alpha,"     ", ybuddy,"     ", xbuddy,"          1/2      ",x)
-        println()
         S=sᵥ
         shares=Vshares
         VV=V #which is split
         num_split_shares=Int64(num_large_shares/2)
-        endpoints=Array{Rational,2}(undef,0,0)
-        endpoints =  [alpha ybuddy]
-        endpoints = [endpoints; [xbuddy 1//2]; [1//2 x]]
-
     else
         num_small_shares = V₋₁shares-Vshares
         num_large_shares =   Vshares
@@ -555,4 +538,6 @@ end
 #GAP_proof(55,31,151//372)
 #GAP_proof(67,31,187//434)
 #GAP_proof(55,34,151//374)
-VGAP(55,34,151//374)
+#VGAP(55,34,151//374)
+
+#VGAP(54,47,16//47)
