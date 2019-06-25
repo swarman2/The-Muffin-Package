@@ -3,24 +3,10 @@
 ##############################
 
 include("helper_functions.jl")
-include("HALF.jl") #for SV and FINDEND
 include("src\\permutations.jl") #for multiset_permutations
 using JuMP
 using GLPK
-function perm(n,r)
-    A=Array{Int64,1}(undef,r*(n+1))
-    for i=1:length(A)
-        A[i]=floor((i-1)/r)
-    end
-#    print(A)
 
-    X=(collect(multiset_permutations(A,r)))
-#    display(X)
-#    println("********************")
-    X=filter(x->sum(x)==n,X)
-    return X
-
-end
 function GAP_proof(m,s,alpha)
     V,sᵥ,sᵥ₋₁=SV(m,s)
     Vshares=V*sᵥ
@@ -30,7 +16,7 @@ function GAP_proof(m,s,alpha)
 
     xbuddy = 1-x
     ybuddy = 1-y
-    print_Intervals(m,s,alpha)
+    endpoints = print_Intervals(m,s,alpha)
     if(V₋₁shares<Vshares)
          num_small_shares = V₋₁shares
         num_large_shares = Vshares - V₋₁shares
@@ -41,33 +27,12 @@ function GAP_proof(m,s,alpha)
     else
         num_small_shares = V₋₁shares-Vshares
         num_large_shares =   Vshares
-        println("m  = ",m,"  s = ", s)
-        println( sᵥ," ",V,"-students \t",sᵥ₋₁," ",V-1,"-students \t",sᵥ*V," ",V,"-shares \t",sᵥ₋₁*(V-1)," ",V-1,"-shares")
-        println()
-        println("SPLIT THE ",V-1," SHARES")
-        println("   ( ",Vshares," ",V,"-shares)  | (",num_small_shares," small ",V-1,"-shares)      ( ",num_large_shares," large ",V-1,"-shares )    ")
-        println("  ",alpha,"     ", x," | ", y,"          ",ybuddy,"  ", xbuddy,"              ",1-alpha)
-        println()
-        println("SPLIT THE ",V-1," SHARES AGAIN")
-        println("    (",Int64(num_small_shares/2),"  ",V-1,"-shares | ",Int64(num_small_shares/2),"  ",V-1,"-shares)      ( ",num_large_shares," large ",V-1,"-shares )    ")
-        println("     ", y,"    1/2 ", ybuddy,"          ",xbuddy, "        ",1-alpha)
-        println()
         S=sᵥ₋₁
         shares=V₋₁shares
         VV=V-1 #which is split
         num_split_shares=Int64(num_small_shares/2)
-        endpoints =Array{Rational, 2}(undef,0,0)
-        endpoints =[y 1//2]
-        endpoints = [endpoints;[1//2 ybuddy]; [xbuddy (1-alpha)]]
-    #    sharesInIntervals = Array{Int64}(undef,0)
-    #    append!(sharesInIntervals, [Int64(num_small_shares/2) Int64(num_small_shares/2) num_large_shares])
+    end #******************************end else
 
-    #    for i = 1:numIntervals
-    #        print(endpoints[i,:])
-    #        println("  ",sharesInIntervals[i])
-    #    end
-
-end #******************************end else
     println("Endpoints: ")
     display(endpoints)
     row, col= size(endpoints)
