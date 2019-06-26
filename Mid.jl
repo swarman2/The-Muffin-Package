@@ -11,24 +11,8 @@ function MID_proof(m,s,alpha)
 
     xbuddy = 1-x
     ybuddy = 1-y
+    print_Intervals(m,s,alpha)
     if(V₋₁shares<Vshares)
-
-         #___(_______)________(_____)___|___(_____)____
-         #alpha   y-buddy   xbuddy   x  |   y    1-alpha
-         #smallShare is an array that holds the possiblities for number of small shares
-         num_small_shares = V₋₁shares
-        num_large_shares = Vshares - V₋₁shares
-        println("m  = ",m,"  s = ", s)
-        println( sᵥ," ",V,"-students \t",sᵥ₋₁," ",V-1,"-students \t",sᵥ*V," ",V,"-shares \t",sᵥ₋₁*(V-1)," ",V-1,"-shares")
-        println()
-        println("SPLIT THE ",V," SHARES")
-        println("   ( ",num_small_shares," small ",V,"-shares)   (",num_large_shares," large ",V,"-shares)   |   ( ",V₋₁shares,"  ",V-1,"-shares )    ")
-        println("  ",alpha,"     ", ybuddy,"  ", xbuddy,"          ",x," | ", y,"              ",1-alpha)
-        println()
-        println("SPLIT THE ",V," SHARES AGAIN")
-        println("   ( ",num_small_shares," " ,V,"-shares)           (",Int64(num_large_shares/2)," large ",V,"-shares |  ",Int64(num_large_shares/2)," large ",V,"-shares)    ")
-        println("  ",alpha,"     ", ybuddy,"     ", xbuddy,"          1/2      ",x)
-        println()
         I1=num_small_shares
         I2=Int64(num_large_shares/2)
         I3=I2

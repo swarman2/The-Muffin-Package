@@ -1,3 +1,134 @@
+
+#mulitsets of B that sum to T of size k
+function Multiset(B,T,k)
+
+    A=Dict{String,Vector{Vector{Int64}}}()
+
+    i=length(B)
+    A,sol= Multiset_helper(B,A,i,T,k)
+    #println("i: ",i,"  T: ",T,"  k: ",k)
+    #println("SOL= ",sol)
+    return sol
+
+end
+function Multiset_helper(B,A,i::Int64,T::Int64,k::Int64)
+    #println("i: ",i," T: ",T," k: ",k)
+    if T <=0 || i == 0 || k==0
+        #println("TEST1")
+        return A,0
+    elseif B[1]*k ==T
+        #println("TEST2")
+        array=Array{Int64}(undef, k)
+        for j=1:length(array)
+            array[j]=B[1]
+        end
+        #println("I = ",i)
+        return A,[array]
+    elseif i==1 && T%k != B[1]
+        #println("TEST3")
+    #        println("test")
+        return A,0
+    elseif T%B[1]==0 && i==1
+        #println("TEST4")
+        return A,0
+    elseif k==1
+        #println("TEST5")
+        inFirst = false
+        for j=1:i
+        #        println("B[i] = ",B[i])
+            if B[j]==T
+
+                inFirst = true
+            end
+        end
+        if inFirst
+        #    println("i = ",i)
+        #    println("_5")
+            return A,[[T]]
+        else
+            return A,0
+        end
+    end
+
+    #println(i," ",T," ",k)
+str=string(i)*string(T) * string(k)
+    if(haskey(A,str))
+        return A, A[str]
+    else
+    #    println("TEST")
+        sol=Vector{Vector{Int64}}()
+        A, Temp1=Multiset_helper(B,A, i-1,T,k)
+        A, Temp2=Multiset_helper(B,A, i,Int64(T-B[i]),k-1)
+
+        #if i==3 && T==20 && k==3
+        #    println("T1: ",Temp1)
+        #    println("T2: ",Temp2)
+        #end
+        if Temp1 !=0 && Temp2 !=0
+         #  println("test1")
+         #  println("T1 : ", Temp1)
+          # println("T2 : ", Temp2)
+               sol=Vector{Vector{Int64}}()
+           row = length(Temp2)
+
+           for j = 1:row
+               push!(sol, [B[i]])
+               for k =1: length(Temp2[j])
+                   push!(sol[j], Temp2[j][k])
+               end
+           end
+
+            row = length(Temp1)
+            for j = 1:row
+               push!(sol,Temp1[j])
+            end
+
+
+
+
+        elseif Temp1 !=0
+        #   println("test2")
+           sol=Vector{Vector{Int64}}()
+           row = length(Temp1)
+            for j = 1:row
+               push!(sol,Temp1[j])
+            end
+        elseif Temp2 !=0
+        #    println("test3")
+        #    println(typeof( [B[i]; Temp2]))
+            sol=Vector{Vector{Int64}}()
+        #    println(Temp2)
+            row = length(Temp2)
+        #    println()
+        #    println()
+        #    println("T2 = ", Temp2)
+        #    println("ROW: ", row)
+        #    println("length = ",length(Temp2[1]))
+            for j = 1:row
+                push!(sol, [B[i]])
+        #        println("1: ",sol)
+                for k=1:length(Temp2[j])
+        #            println("*********",Temp2[1][k])
+                    push!(sol[j], Temp2[j][k])
+        #            println(sol)
+                end
+            end
+
+        else
+            return A,0
+        end
+        #println("sol = ", sol)
+        str=string(i)*string(T) * string(k)
+    #    println(sol)
+    #    println(size(sol))
+#    println(typeof(sol))
+#    println(sol)
+        A[str] =vec(sol)
+        return A, sol
+    end
+
+end
+
 function print_Intervals(m,s,alpha)
     V,sᵥ,sᵥ₋₁=SV(m,s)
     Vshares=V*sᵥ

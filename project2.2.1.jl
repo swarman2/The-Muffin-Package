@@ -75,7 +75,7 @@ elseif HBD_alpha <= min_alpha
 end
 end
 
-
+#FIND_ALPHA(61,19)
 
 println("   M   |   S   |   Method   |      α   ")
 println("---------------------------------------")
