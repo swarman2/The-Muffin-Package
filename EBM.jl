@@ -13,7 +13,7 @@ function EBM(m::Int,s::Int)
         k=Int64(floor(k-1))
     end
     a=Int64(s-3d*k)
-    println(d," ",k," ", a)
+    #println(d," ",k," ", a)
     if 2d+1<=a && a<=3d
         return 1//3
     end
