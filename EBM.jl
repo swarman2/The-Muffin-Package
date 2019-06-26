@@ -6,20 +6,25 @@ function EBM(m::Int,s::Int)
       return 1
     end
     d = Int64(m-s)
-    k =Int64( floor(s/(3d)))
-    a=Int64(s-3d*k)
-    if a==d ||a==2d || a==3d
-    #    println("Bad Input: a ∈ {d, 2d, 3d}")
-        return 1
+    k =(s/(3d))
+    if s%(3d) == 0
+        k=Int64(k-1)
+    else
+        k=Int64(floor(k-1))
     end
+    a=Int64(s-3d*k)
+    println(d," ",k," ", a)
     if 2d+1<=a && a<=3d
         return 1//3
     end
-    if 1<=a && a<= 2d
+    if a ==2d
+        return a//2
+    end
+    if 1<=a && a<= 2d-1
         X=min(a//2,(a+d)//4)
         return ((d*k+X)//(3d*k+a))
     end
-    return 1
+    #return 1
 end
 
 function Pebm(m,s)#print easy buddy method
@@ -40,3 +45,4 @@ end
 #Pebm(50,47)
 #Pebm(51,49)
 #Pebm(53,50)
+Pebm(13,12)
