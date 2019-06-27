@@ -1,16 +1,47 @@
 ##############################
 # !!ASSUMES MID DID NOT WORK!!
 ##############################
+include("GAP1.jl")
+include("PROC.jl")#for binsearch
 
-include("helper_functions.jl")
-include("src\\permutations.jl") #for multiset_permutations
 using JuMP
 using GLPK
 
+#binary search, used in GAP uses PROC and VGAP to find the
+#alpha is a sorted array
+function binSearch(m,s,array)
+    return binSearchHelp(m,s,array, 1, length(array))
+end
+function binSearchHelp(m,s,array,front,back)
+#    println("front: ",front,"  back:  ",back)
+    if front>back
+        return -1
+    end
+    guessIndex = front + Int64(floor((back-front)/2))
+
+    guess = array[guessIndex]
+    bool_Proc=VProc(m,s,guess)
+    bool_Gap=VGAP(m,s,guess)
+    if bool_Proc == true && bool_Gap ==true
+        return guess
+    elseif bool_Proc ==true
+        binSearchHelp(m,s,array, guessIndex+1,back)
+    else
+        binSearchHelp(m,s,array,front,guessIndex-1)
+    end
+end
+
+
+
 function GAP_proof(m,s,alpha)
+
     V,sᵥ,sᵥ₋₁=SV(m,s)
     Vshares=V*sᵥ
     V₋₁shares=(V-1)*sᵥ₋₁
+    if V==3
+        GAPV3(m,s,alpha)
+        return
+    end
 
     x,y=FINDEND(m,s,alpha,V)
 
@@ -24,6 +55,7 @@ function GAP_proof(m,s,alpha)
         shares=Vshares
         VV=V #which is split
         num_split_shares=Int64(num_large_shares/2)
+
     else
         num_small_shares = V₋₁shares-Vshares
         num_large_shares =   Vshares
@@ -31,10 +63,11 @@ function GAP_proof(m,s,alpha)
         shares=V₋₁shares
         VV=V-1 #which is split
         num_split_shares=Int64(num_small_shares/2)
+
     end #******************************end else
 
-    println("Endpoints: ")
-    display(endpoints)
+    #println("Endpoints: ")
+    #display(endpoints)
     row, col= size(endpoints)
     numIntervals = row
     X = perm(VV, numIntervals)
@@ -58,6 +91,7 @@ function GAP_proof(m,s,alpha)
     for i in possInd
         println(X[i,:])
     end
+
     while(true)
 
         #find gaps
@@ -72,9 +106,10 @@ function GAP_proof(m,s,alpha)
             println()
         end
         """
+        _gap=false
+
         lowerbound = 0
         upperbound = 0
-        _gap=false
         for j=1:numIntervals
             lowerbound=endpoints[j,1]
             upperbound=endpoints[j,2]
@@ -125,7 +160,6 @@ function GAP_proof(m,s,alpha)
                 numIntervals=numIntervals+2
             end #end if(lowerbound>upperbound)
         end #end for j=1:numInterval
-
             println("\nEndpoints after finding gaps: ")
             display(endpoints)
             println()
@@ -177,7 +211,7 @@ function GAP_proof(m,s,alpha)
             row_endpt,col_endpt = size(endpoints)
             for i = 1:row_endpt
                 for j=i+1:row_endpt
-                    if (endpoints[i,1]+endpoints[j,2])==1 && endpoints[i,2]-endpoints[i,1]==endpoints[j,2]-endpoints[j,1]
+                    if ((endpoints[i,1]+endpoints[j,2])== 1 && endpoints[i,2] + endpoints[j,1] == 1) || ((endpoints[i,1]+endpoints[j,2])== m//s && endpoints[i,2] + endpoints[j,1] == m//s && V-1==2)
                         if length(symmIntervals) == 0
                             symmIntervals = [i j]
                         else
@@ -258,7 +292,9 @@ function VGAP(m,s,alpha)
     V,sᵥ,sᵥ₋₁=SV(m,s)
     Vshares=V*sᵥ
     V₋₁shares=(V-1)*sᵥ₋₁
-
+    if V==3
+        return VGAPV3(m,s,alpha)
+    end
     x,y=FINDEND(m,s,alpha,V)
 
     xbuddy = 1-x
@@ -492,6 +528,46 @@ end #******************************end else
         end #end while
 end
 
+
+function GAP(m,s)
+    if m%s==0
+        return 1
+    end
+    array=Array{Rational}(undef,0)
+    alph = 1//3
+    num=1
+    denom=3
+    while denom<=m*s
+        while alph<1//2
+            append!(array,alph)
+            num=num+1
+            alph = num//denom
+        #    println(alph)
+    #        println(alph)
+        end
+        num=Int64(ceil(denom/3))
+        denom = denom+1
+        while (denom%s!=0)
+        #    println(denom)
+            denom=denom+1
+        end
+        alph = num//denom
+    #    println(alph)
+    end
+    sort!(array)
+#    println(length(array))
+    #println(array)
+    alpha = binSearch(m,s,array)
+#    println(alpha)
+    if alpha==-1
+        return 1
+    else
+        return alpha
+    end
+end
+#GAP(31,19)
+#GAP(41,19)
+#GAP(59,22)
 #GAP_proof(31,19,54//133)
 #GAP_proof(41,19,131//304)
 #GAP_proof(59,22,167//374)
@@ -505,4 +581,4 @@ end
 #GAP_proof(55,34,151//374)
 #VGAP(55,34,151//374)
 
-#VGAP(54,47,16//47)
+#GAP_proof(54,47,16//47)
