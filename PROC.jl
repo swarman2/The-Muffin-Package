@@ -61,9 +61,10 @@ function VProc(m,s,alphaa)
     V=Int64(ceil(2m/s))
     #use Mulitset function (in helper_functions) to find
     #the possible mulitsets of studdent distributions that sum to denom *m/s
+#    println("length of B = ",length(B),"  m//s *denom = ",Int64((m//s)*denom))
     vec_1 = Multiset(B,Int64((m//s)*denom),V)
     vec_2 = Multiset(B,Int64((m//s)*denom),V-1)
-
+#    println("finished mulitsets")
     if(vec_1 !=0 && vec_2 !=0)
         for i=1:length(vec_2)
             push!(vec_1,vec_2[i])
@@ -113,6 +114,9 @@ function VProc(m,s,alphaa)
     @variable(model, x[i=1:col_1+col_2],Int)
     @constraint(model,con_1,x.>=0)
     @constraint(model,con_2,final_mat*x .==final_mat_2)
+#    display(final_mat)
+#    println("*******************")
+#    display(final_mat_2)
     optimize!(model)
 
     #return true if it has a solution, false otherwise
@@ -167,7 +171,6 @@ function PROC(m,s,alphaa)
     mat_1=unique(mat_1,dims=2)
 
     V=Int64(ceil(2m/s))
-
     vec_1 = Multiset(B,Int64((m//s)*denom),V)
     vec_2 = Multiset(B,Int64((m//s)*denom),V-1)
     AA = Array{Int64,1}(undef,0)

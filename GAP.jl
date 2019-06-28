@@ -9,27 +9,38 @@ using GLPK
 
 #binary search, used in GAP uses PROC and VGAP to find the
 #alpha is a sorted array
-function binSearch(m,s,array)
-    return binSearchHelp(m,s,array, 1, length(array))
-end
-function binSearchHelp(m,s,array,front,back)
-#    println("front: ",front,"  back:  ",back)
-    if front>back
-        return -1
+    function linearSearch(m,s,array)
+        for i=1:length(array)
+    #        print(array[i])
+    #        println("   ",VGAP(m,s,array[i]))
+            if VGAP(m,s,array[i])==true
+            #    GAP_proof(m,s,array[i])
+                return array[i]
+            end
+        end
     end
-    guessIndex = front + Int64(floor((back-front)/2))
 
-    guess = array[guessIndex]
-    bool_Proc=VProc(m,s,guess)
-    bool_Gap=VGAP(m,s,guess)
-    if bool_Proc == true && bool_Gap ==true
-        return guess
-    elseif bool_Proc ==true
-        binSearchHelp(m,s,array, guessIndex+1,back)
-    else
-        binSearchHelp(m,s,array,front,guessIndex-1)
+    function binSearch(m,s,array)
+        return binSearchHelp(m,s,array, 1, length(array))
+
     end
-end
+    function binSearchHelp(m,s,array,front,back)
+    #    println("front: ",front,"  back:  ",back)
+        if front>back
+            return -1
+        end
+        guessIndex = front + Int64(floor((back-front)/2))
+
+        guess = array[guessIndex]
+
+        if bool_Proc == true && bool_Gap ==true
+            return guess
+        elseif bool_Proc ==true
+            return binSearchHelp(m,s,array, guessIndex+1,back)
+        else
+            return binSearchHelp(m,s,array,front,guessIndex-1)
+        end
+    end
 
 
 
@@ -47,6 +58,15 @@ function GAP_proof(m,s,alpha)
 
     xbuddy = 1-x
     ybuddy = 1-y
+
+    if (x==1-alpha && y==alpha) ||(y==1-alpha && x==alpha)
+        println("all one interval alpha could be ≥ ",alpha)
+        return false
+    end
+    if x > y
+        println("intervals not disjoint alpha could be ≥ ", alpha)
+        return false
+    end
     endpoints = print_Intervals(m,s,alpha)
     if(V₋₁shares<Vshares)
          num_small_shares = V₋₁shares
@@ -87,9 +107,14 @@ function GAP_proof(m,s,alpha)
         end
     end
 
-    println("\nPossible distributions of muffins: ")
-    for i in possInd
-        println(X[i,:])
+    if(length(possInd)==0)
+        println("No possible distributions of muffins alpha ≤ ",alpha)
+        return true
+    else
+            println("\nPossible distributions of muffins: ")
+            for i in possInd
+                println(X[i,:])
+            end
     end
 
     while(true)
@@ -299,6 +324,12 @@ function VGAP(m,s,alpha)
 
     xbuddy = 1-x
     ybuddy = 1-y
+    if (x==1-alpha && y==alpha) ||(y==1-alpha && x==alpha)
+        return false
+    end
+    if x > y
+        return false
+    end
     if(V₋₁shares<Vshares)
          #___(_______)________(_____)___|___(_____)____
          #alpha   y-buddy   xbuddy   x  |   y    1-alpha
@@ -351,7 +382,9 @@ end #******************************end else
             append!(possInd, i)
         end
     end
-
+    if(length(possInd)==0)
+        return true
+    end
     while(true)
 
         #find gaps
@@ -443,7 +476,7 @@ end #******************************end else
             end
 
             if length(possInd)==0
-                return false
+                return true
             end
 
             poss_Dist=reshape([],0,2) #possibe distributions of muffins
@@ -555,9 +588,11 @@ function GAP(m,s)
     #    println(alph)
     end
     sort!(array)
+    unique!(array)
 #    println(length(array))
     #println(array)
-    alpha = binSearch(m,s,array)
+    alpha = linearSearch(m,s,array)
+#    println(alpha)
 #    println(alpha)
     if alpha==-1
         return 1
@@ -567,7 +602,7 @@ function GAP(m,s)
 end
 #GAP(31,19)
 #GAP(41,19)
-#GAP(59,22)
+GAP(59,22)
 #GAP_proof(31,19,54//133)
 #GAP_proof(41,19,131//304)
 #GAP_proof(59,22,167//374)
@@ -580,5 +615,8 @@ end
 #GAP_proof(67,31,187//434)
 #GAP_proof(55,34,151//374)
 #VGAP(55,34,151//374)
-
+#VGAP(31,19,233//589)
+#GAP_proof(31,19,208//513)
 #GAP_proof(54,47,16//47)
+#GAP_proof(41,19,204,475)
+#perm(3,3)

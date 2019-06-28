@@ -1,4 +1,4 @@
-
+include("src\\permutations.jl") #for multiset_permutationsS
 #mulitsets of B that sum to T of size k
 function Multiset(B,T,k)
 
@@ -161,6 +161,8 @@ function print_Intervals(m,s,alpha)
         VV=V #which is split
         num_split_shares=Int64(num_large_shares/2)
         endpoints=Array{Rational,2}(undef,0,0)
+    #    endpoints =  [alpha ybuddy]
+    #    endpoints = [endpoints; [xbuddy 1//2]; [1//2 x]; [y (1-alpha)]]
         endpoints =  [alpha ybuddy]
         endpoints = [endpoints; [xbuddy 1//2]; [1//2 x]]
 
@@ -185,10 +187,54 @@ function print_Intervals(m,s,alpha)
         endpoints =Array{Rational, 2}(undef,0,0)
         endpoints =[y 1//2]
         endpoints = [endpoints;[1//2 ybuddy]; [xbuddy (1-alpha)]]
+    #    endpoints =[alpha x]
+    #    endpoints = [endpoints;[y 1//2]; [1//2 ybuddy]; [xbuddy (1-alpha)]]
     end
     return endpoints
 end
+
+#returns all permutations of numbers 1 through n of size
+# r that sum to n
+#(ex 2,3:
+#   [[0,0,2],[0,1,1],[0,2,0],[1,0,1],[1,1,0],[2,0,0]]
+#)
 function perm(n,r)
+#    println("n: ",n)
+    B=Vector{Int64}(undef,0)
+    X=Vector{Vector{Int64}}()
+    for i=1:r
+        push!(B,0)
+    end
+    l=1
+while (true)
+    B[1]=B[1]+1
+    i=1
+
+    while i <r
+        if sum(B)==n+1#B[i]==n+1
+            B[i]=0
+            B[i+1]=B[i+1]+1
+        end
+        i = i +1
+    end
+    if sum(B) == n
+    #    println(B)
+        push!(X,[B[1]])
+        for k=2:length(B)
+            append!(X[l],B[k])
+        end
+        l=l+1
+    #    display(X)
+    end
+    if sum(B) > n
+        break;
+    end
+
+end
+#display(X)
+return X
+
+    """
     A=Array{Int64,1}(undef,r*(n+1))
     for i=1:length(A)
         A[i]=floor((i-1)/r)
@@ -200,7 +246,7 @@ function perm(n,r)
 #    println("********************")
     X=filter(x->sum(x)==n,X)
     return X
-
+"""
 end
 
 #SV takes m,s as input and returns
