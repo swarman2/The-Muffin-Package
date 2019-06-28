@@ -602,7 +602,7 @@ function GAP(m,s)
 end
 #GAP(31,19)
 #GAP(41,19)
-GAP(59,22)
+#GAP(59,22)
 #GAP_proof(31,19,54//133)
 #GAP_proof(41,19,131//304)
 #GAP_proof(59,22,167//374)

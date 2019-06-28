@@ -1,4 +1,4 @@
-include("src\\permutations.jl") #for multiset_permutationsS
+#include("src\\permutations.jl") #for multiset_permutationsS
 #mulitsets of B that sum to T of size k
 function Multiset(B,T,k)
 

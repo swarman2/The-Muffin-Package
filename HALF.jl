@@ -5,11 +5,9 @@ include("helper_functions.jl")
 #from pg 70
 function VHALF(m,s,𝛂)
   if 𝛂<1//3
-    #println("Bad input")
     return false
   end
   if 𝛂 >1//2
-  #  println("𝛂 > 1//2 is a bad guess, please rethink")
     return false
   end
   (V,sᵥ, sᵥ₋₁)=SV(m,s)
@@ -26,15 +24,12 @@ function VHALF(m,s,𝛂)
 return false
 end
 
-#HALF
-#input :m,s, output: alpha, 1, or prints not a useful answer
 #adapted from pg 71-72
 function HALF(m,s)
   if m%s == 0
     return 1
   end
   V,sᵥ,sᵥ₋₁=SV(m,s)
-#  println("V=",V,"  Sv =",sᵥ,"  Sv-1 = ", sᵥ₋₁)
   if (V-1)*sᵥ₋₁>V*sᵥ
     alpha = 1-((m//s-1//2)//(V-2))
     if(alpha<1//3)
@@ -52,7 +47,6 @@ function HALF(m,s)
       return alpha
     end
   else
-  #  println("Not a useful answer")
     return 1
   end
 end
@@ -100,34 +94,21 @@ function Half_proof(m,s,alpha)
   println("buddy < 𝛂: ",more_than_lower)
   println()
   if(less_than_upper && more_than_lower)
-    #solve for s3 and s4
-    #
-    #(V-1)s3+Vs4=pieces
-    #s3+s4=students
-    #
-    #may want to change subscripts on s
+
     println(V-1,"sᵥ₋₁ + ",V,"sᵥ = ", pieces)
     println("sᵥ₋₁ + sᵥ = ", s)
-  #  A=[V-1 V; 1 1]; B=[pieces; s];
-  #  X=A\B #solve the system AX=B
     #These equations were found by manually solving the above matrix equation
     s3=s*V-pieces
     s4=pieces-s*V+s
-  #  println("sᵥ₋₁: ", s3," sᵥ: ", s4)
     println("There are ", s3, " ",V-1,"-students, ", s4," ",V,"-students, ",(V-1)*s3, " ",V-1,"-shares, and ", V*s4, " ",V,"-shares.")
-
     println("Endpoints are x = ",x," and y = ",y)
     #Alice has a 4-share > x (x=m/s - 3𝛂)
     println()
+
     println("Case 3:")
-    #x=Rational(m/s-(3*alpha))
-    #x=(m-(V-1)*alpha*s)//s
-
-
     println("Alice has a ", V,"-share > ",x)
-   # temp = Rational((m//s)-x)#this is an intermediate value used frequently
     temp=(m-x*s)//s
-   println("Alice's other ", V-1," ",V, "-shares add up to < ", m//s, " - ", x," = ", temp)
+    println("Alice's other ", V-1," ",V, "-shares add up to < ", m//s, " - ", x," = ", temp)
     print("so one of Alice's shares must be < ", temp, " * 1/",V-1," = ")
     temp=numerator(temp)//(denominator(temp)*(V-1))
     println(temp)
@@ -140,9 +121,6 @@ function Half_proof(m,s,alpha)
     println()
     println("Case 4:")
     #Bob has a 3-share < y (y=m/s - 2*(1-alpha))
-     #y=Rational(m//s - (V-2)*(1-alpha))
-    #y=(m-(V-2)*(1-alpha)*s)//s
-   #temp = Rational((m//s)-y)
    temp=(m-y*s)//s
     println("Bob has a ", V-1,"-share < ",y)
     println("Bob's other ",V-2," ",V-1,"-shares add up to > ",m//s, " - ", y, " = ", temp)
@@ -170,8 +148,6 @@ function Half_proof(m,s,alpha)
     end
   end
 end
-
-
 
 #(Half_proof(11,5,13//30))
 #println(VHALF(45,26,32/78))

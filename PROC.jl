@@ -1,5 +1,5 @@
-include("src/combinations.jl")
-include("src/partitions.jl")
+#include("src/combinations.jl")
+#include("src/partitions.jl")
 include("helper_functions.jl")
 using JuMP
 using GLPK

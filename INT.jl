@@ -221,7 +221,6 @@ function INT(m,s)
   if m%s == 0
     return 1
   end
- #println("m: ",m," s: ",s)
  V,sᵥ,sᵥ₋₁=SV(m,s)
  Vshares=V*sᵥ
  V₋₁shares=(V-1)*sᵥ₋₁
@@ -239,9 +238,9 @@ function INT(m,s)
    #𝛂   1-y    1-x    x      y    1-𝛂
    #x = m//s -alpha*(v-1)
    #y = m//s - (1-alpha)*(V-2)
-   min_large = Int64(floor(num_large_shares/sᵥ)) #this is a guess
+   min_large = Int64(floor(num_large_shares/sᵥ))
    #m//s >= (1-y)*(V-min_large) + x*min_large
-   #
+
    j=1
       for i=0:V
         min_large=V -i
@@ -259,9 +258,7 @@ function INT(m,s)
          alpha=1//3
        end
        return (alpha)
-      # VINT_proof(m,s,alpha)
 
-    #  println()
 
  elseif(V₋₁shares>Vshares)
    #(    )      (    )       (    )
@@ -269,7 +266,7 @@ function INT(m,s)
    #x = m//s -alpha*(v-1)
    #y = m//s - (1-alpha)*(V-2)
    #m//s >= (1-y)*(V-1-min_large) + (1-alpha)*min_large
-   #
+
 
    num_large_shares = Vshares
    min_large=Int64(floor(num_large_shares/sᵥ₋₁))
@@ -293,7 +290,6 @@ function INT(m,s)
          alpha=1//3
        end
        return (alpha)
-      # VINT_proof(m,s,alpha)
     else
       return 1
  end

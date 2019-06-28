@@ -1,4 +1,4 @@
-include("src\\permutations.jl")
+#include("src\\permutations.jl")
 include("helper_functions.jl")
 using JuMP
 using GLPK
@@ -8,11 +8,12 @@ function linearSearch(m,s,array)
 #        println("   ",VGAP(m,s,array[i]))
 
         if VMID(m,s,array[i])==true
-            MID_proof(m,s,array[i])
+        #    MID_proof(m,s,array[i])
         #    GAP_proof(m,s,array[i])
             return array[i]
         end
     end
+    return -1
 end
 
 function VMID(m,s,alpha)
@@ -20,9 +21,7 @@ function VMID(m,s,alpha)
         V,sᵥ,sᵥ₋₁=SV(m,s)
         Vshares=V*sᵥ
         V₋₁shares=(V-1)*sᵥ₋₁
-        if V==3
-            return VGAPV3(m,s,alpha)
-        end
+
         x,y=FINDEND(m,s,alpha,V)
 
         xbuddy = 1-x
@@ -183,10 +182,6 @@ function MID_proof(m,s,alpha)
     V,sᵥ,sᵥ₋₁=SV(m,s)
     Vshares=V*sᵥ
     V₋₁shares=(V-1)*sᵥ₋₁
-    if V==3
-        GAPV3(m,s,alpha)
-        return
-    end
 
     x,y=FINDEND(m,s,alpha,V)
 
@@ -335,7 +330,7 @@ function MID_proof(m,s,alpha)
             println()
             println("There is a solution on the Naturals")
             #println(value.(x))
-            println("Looking for more gaps")
+            println("alpha ≥ ",alpha)
             println()
         else
             println("No solution on the Naturals")
@@ -387,4 +382,4 @@ end
 #MID(33,20,49//120)
 #MID(37,21,103//252)
 #MID(59,14,131//280)
-MID(33,20)
+#MID(33,20)

@@ -161,17 +161,19 @@ let _nipartitions = Dict{Tuple{Int,Int},Int}()
             _nipartitions[(n, m)] = npartitions(n-1, m-1) + npartitions(n-m, m)
         end
     end
+    
 end
 
 # Algorithm H from TAoCP 7.2.1.5
 # Set partitions
 
-struct SetPartitions{T<:AbstractVector}
-    s::T
-end
-
+#struct SetPartitions{T<:AbstractVector}
+#    s::T
+#end
 Base.length(p::SetPartitions) = nsetpartitions(length(p.s))
 Base.eltype(p::SetPartitions) = Vector{Vector{eltype(p.s)}}
+
+
 
 """
     partitions(s::AbstractVector)

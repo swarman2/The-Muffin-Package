@@ -79,6 +79,9 @@ function VGAPV3(m,s,alpha)
         end
     end
     permV=perm(V, numVIntervals)
+    if(row_endpt == numVIntervals)
+        return 1
+    end
     permV_ = perm(V-1, row_endpt - numVIntervals)
     #display(permV)
     #println("*********")
