@@ -17,7 +17,7 @@ function FIND_ALPHA(m,s)
          EBM_alpha = EBM(m,s)
          HBD_alpha = HBM(m,s)
          MID_alpha = MID(m,s)
-         println(MID(m,s))
+      #   println(MID(m,s))
          #GAP_alpha = GAP(m,s)
 
 alphas = [FC_alpha INT_alpha HALF_alpha EBM_alpha HBD_alpha MID_alpha] #GAP_alpha]

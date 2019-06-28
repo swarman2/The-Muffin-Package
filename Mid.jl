@@ -2,11 +2,12 @@
 include("helper_functions.jl")
 using JuMP
 using GLPK
-function linearSearch(m,s,array)
+function linearSearchMID(m,s,array)
     for i=1:length(array)
 #        print(array[i])
 #        println("   ",VGAP(m,s,array[i]))
-
+#        (MID_proof(m,s,array[i]))
+#        println("test")
         if VMID(m,s,array[i])==true
         #    MID_proof(m,s,array[i])
         #    GAP_proof(m,s,array[i])
@@ -339,6 +340,7 @@ function MID_proof(m,s,alpha)
         end
 end
 function MID(m,s)
+    #println("Test: m ",m,"  s ",s)
     if m%s==0
         return 1
     end
@@ -367,9 +369,10 @@ function MID(m,s)
     unique!(array)
 #    println(length(array))
     #println(array)
-    alpha = linearSearch(m,s,array)
+    alpha = linearSearchMID(m,s,array)
 #    println(alpha)
 #    println(alpha)
+println(alpha)
     if alpha==-1
         return 1
     else
