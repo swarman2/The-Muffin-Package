@@ -1,46 +1,48 @@
-##############################
-# !!ASSUMES MID DID NOT WORK!!
-##############################
+
 include("GAP1.jl")
-include("PROC.jl")#for binsearch
 
 using JuMP
-using GLPK
+using Cbc
 
 #binary search, used in GAP uses PROC and VGAP to find the
 #alpha is a sorted array
-    function linearSearch(m,s,array)
-        for i=1:length(array)
-    #        print(array[i])
-    #        println("   ",VGAP(m,s,array[i]))
-            if VGAP(m,s,array[i])==true
-            #    GAP_proof(m,s,array[i])
-                return array[i]
-            end
+function linearSearch(m,s,array)
+    for i=1:length(array)
+#        print(array[i])
+#        println("   ",VGAP(m,s,array[i]))
+        if VGAPV3(m,s,array[i])==true
+        #    GAP_proof(m,s,array[i])
+            return array[i]
         end
     end
+    return -1
+end
 
-    function binSearch(m,s,array)
-        return binSearchHelp(m,s,array, 1, length(array))
+function binarySearchGAP(m,s,array)
+    return binSearchHelpGAP(m,s,array,1,length(array))
+end
+function binSearchHelpGAP(m,s,array,front,back)
+    #println("m: ",m,"  s: ",s)
 
+    if front>back
+        return 1
     end
-    function binSearchHelp(m,s,array,front,back)
-    #    println("front: ",front,"  back:  ",back)
-        if front>back
-            return -1
-        end
-        guessIndex = front + Int64(floor((back-front)/2))
-
-        guess = array[guessIndex]
-
-        if bool_Proc == true && bool_Gap ==true
-            return guess
-        elseif bool_Proc ==true
-            return binSearchHelp(m,s,array, guessIndex+1,back)
+    guessIndex =Int64(floor((front+back)/2))
+#    println("front: ",front,"  back: ",back,"  alpha: ",array[guessIndex])
+    if guessIndex == front
+        if VGAPV3(m,s,array[back])==true
+            return array[back]
         else
-            return binSearchHelp(m,s,array,front,guessIndex-1)
+            return 1
         end
     end
+
+    if VGAPV3(m,s,array[guessIndex]) == true
+        return binSearchHelpGAP(m,s,array,front,guessIndex)
+    else
+        return binSearchHelpGAP(m,s,array,guessIndex, back)
+    end
+end
 
 
 
@@ -50,8 +52,8 @@ function GAP_proof(m,s,alpha)
     Vshares=V*sᵥ
     V₋₁shares=(V-1)*sᵥ₋₁
     if V==3
-        GAPV3(m,s,alpha)
-        return
+    #    GAPV3(m,s,alpha)
+        return false
     end
 
     x,y=FINDEND(m,s,alpha,V)
@@ -59,12 +61,8 @@ function GAP_proof(m,s,alpha)
     xbuddy = 1-x
     ybuddy = 1-y
 
-    if (x==1-alpha && y==alpha) ||(y==1-alpha && x==alpha)
-        println("all one interval alpha could be ≥ ",alpha)
-        return false
-    end
     if x > y
-        println("intervals not disjoint alpha could be ≥ ", alpha)
+        println("intervals not disjoint alpha > ", alpha)
         return false
     end
     endpoints = print_Intervals(m,s,alpha)
@@ -75,16 +73,22 @@ function GAP_proof(m,s,alpha)
         shares=Vshares
         VV=V #which is split
         num_split_shares=Int64(num_large_shares/2)
-
+        I1 = num_small_shares
+        I2 = Int64(num_large_shares/2)
+        I3 = I2
     else
         num_small_shares = V₋₁shares-Vshares
         num_large_shares =   Vshares
         S=sᵥ₋₁
+        I1=Int64(num_small_shares/2)
+        I2=I1
+        I3=num_large_shares
         shares=V₋₁shares
         VV=V-1 #which is split
         num_split_shares=Int64(num_small_shares/2)
 
     end #******************************end else
+    row, col= size(endpoints)
 
     #println("Endpoints: ")
     #display(endpoints)
@@ -107,15 +111,49 @@ function GAP_proof(m,s,alpha)
         end
     end
 
-    if(length(possInd)==0)
-        println("No possible distributions of muffins alpha ≤ ",alpha)
+    if (length(possInd)==0)
+        println("No possible types of students alpha ≤ ",alpha)
         return true
-    else
-            println("\nPossible distributions of muffins: ")
-            for i in possInd
-                println(X[i,:])
-            end
     end
+    poss_Dist=reshape([],0,2) #possibe distributions of muffins
+    for i in possInd
+        if i == possInd[1]
+            poss_Dist=X[i,:]
+        else
+            poss_Dist=[poss_Dist; X[i,:]]
+        end
+    end
+    #get it in the shape I want
+    poss_Dist = transpose(reshape(hcat(poss_Dist...), (length(poss_Dist[1]), length(poss_Dist))))
+    println("Possible types of students:")
+    display(poss_Dist)
+
+    A = transpose(poss_Dist)
+
+    #Append a row of ones to A (num stud per distribtion adds to num VV students)
+    row,col=size(A)
+    Ones=(ones(Int64,col))'
+    A=vcat(A, Ones)
+    row = row+1
+    display(A)
+    model=Model(with_optimizer(Cbc.Optimizer, logLevel=0))
+    @variable(model, x[i=1:length(possInd)],Int)
+    b=[I1,I2,I3,S]
+    @constraint(model,con,A*x .==b)
+    @constraint(model,con_1[i=1:length(possInd)],x[i] >=0)
+    println("System of equations = ",b)
+    display(A)
+
+
+    optimize!(model)
+    if (termination_status(model) != MOI.OPTIMAL)
+        println("No solution on the Naturals")
+        println("alpha ≤ ",alpha)
+        return true
+    end
+
+
+
 
     while(true)
 
@@ -191,7 +229,7 @@ function GAP_proof(m,s,alpha)
 
             if(_gap==false)
                 println("No gaps found")
-                println("alpha could be greater than ",alpha)
+                println("alpha > ",alpha)
                 return
             end
 
@@ -214,7 +252,7 @@ function GAP_proof(m,s,alpha)
             end
 
             if length(possInd)==0
-                println("No possible muffin distributions")
+                println("No possible types of students")
                 println("alpha ≤ ",alpha)
                 return
             end
@@ -229,7 +267,7 @@ function GAP_proof(m,s,alpha)
             end
             #get it in the shape I want
             poss_Dist = transpose(reshape(hcat(poss_Dist...), (length(poss_Dist[1]), length(poss_Dist))))
-            println("Possible muffin distributions")
+            println("Possible types of students")
             display(poss_Dist)
 
             symmIntervals = Array{Int64,2}(undef,0,0) # row [i j] if interval i is symm to interval j
@@ -286,7 +324,7 @@ function GAP_proof(m,s,alpha)
             Ones=(ones(Int64,col))'
             A=vcat(A, Ones)
 
-            model=Model(with_optimizer(GLPK.Optimizer))
+            model=Model(with_optimizer(Cbc.Optimizer,logLevel=0))
             @variable(model, x[i=1:length(possInd)],Int)
             row,col=size(symmIntervals)
 
@@ -296,10 +334,10 @@ function GAP_proof(m,s,alpha)
             b=[b;num_split_shares; num_split_shares;S]
             @constraint(model,con,A*x .==b)
             @constraint(model,con_1,x.>=0)
-            println("System of equations (= ",b)
+            println("System of equations = ",b)
             display(A)
             optimize!(model)
-            if(has_values(model))
+            if (termination_status(model)==MOI.OPTIMAL)
                 println()
                 println("There is a solution on the Naturals")
                 #println(value.(x))
@@ -317,16 +355,16 @@ function VGAP(m,s,alpha)
     V,sᵥ,sᵥ₋₁=SV(m,s)
     Vshares=V*sᵥ
     V₋₁shares=(V-1)*sᵥ₋₁
-    if V==3
-        return VGAPV3(m,s,alpha)
-    end
+
+    #if V==3
+    #    return false
+    #    return VGAPV3(m,s,alpha)
+    #end
     x,y=FINDEND(m,s,alpha,V)
 
     xbuddy = 1-x
     ybuddy = 1-y
-    if (x==1-alpha && y==alpha) ||(y==1-alpha && x==alpha)
-        return false
-    end
+
     if x > y
         return false
     end
@@ -343,11 +381,17 @@ function VGAP(m,s,alpha)
         endpoints=Array{Rational,2}(undef,0,0)
         endpoints =  [alpha ybuddy]
         endpoints = [endpoints; [xbuddy 1//2]; [1//2 x]]
+        I1 = num_small_shares
+        I2 = Int64(num_large_shares/2)
+        I3 = I2
 
     else
         num_small_shares = V₋₁shares-Vshares
         num_large_shares =   Vshares
         S=sᵥ₋₁
+        I1=Int64(num_small_shares/2)
+        I2=I1
+        I3=num_large_shares
         shares=V₋₁shares
         VV=V-1 #which is split
         num_split_shares=Int64(num_small_shares/2)
@@ -362,7 +406,8 @@ function VGAP(m,s,alpha)
     #        println("  ",sharesInIntervals[i])
     #    end
 
-end #******************************end else
+    end #******************************end else
+    row, col= size(endpoints)
 
     row, col= size(endpoints)
     numIntervals = row
@@ -382,9 +427,38 @@ end #******************************end else
             append!(possInd, i)
         end
     end
-    if(length(possInd)==0)
+    if (length(possInd)==0)
         return true
     end
+    poss_Dist=reshape([],0,2) #possibe distributions of muffins
+    for i in possInd
+        if i == possInd[1]
+            poss_Dist=X[i,:]
+        else
+            poss_Dist=[poss_Dist; X[i,:]]
+        end
+    end
+    #get it in the shape I want
+    poss_Dist = transpose(reshape(hcat(poss_Dist...), (length(poss_Dist[1]), length(poss_Dist))))
+    A = transpose(poss_Dist)
+
+    #Append a row of ones to A (num stud per distribtion adds to num VV students)
+    row,col=size(A)
+    Ones=(ones(Int64,col))'
+    A=vcat(A, Ones)
+    row = row+1
+    model=Model(with_optimizer(Cbc.Optimizer, logLevel=0))
+    @variable(model, x[i=1:length(possInd)],Int)
+    b=[I1,I2,I3,S]
+    @constraint(model,con,A*x .==b)
+    @constraint(model,con_1[i=1:length(possInd)],x[i] >=0)
+
+
+    optimize!(model)
+    if (termination_status(model) != MOI.OPTIMAL)
+        return true
+    end
+
     while(true)
 
         #find gaps
@@ -442,6 +516,7 @@ end #******************************end else
             end  #end  for i in possInd
 
             #check to see if the lowerbound and upper bound are valid for a gap
+
             if(lowerbound>upperbound && lowerbound>endpoints[j,1] && upperbound < endpoints[j,2])
                 _gap=true
                 endpoints=[endpoints; lowerbound upperbound; (1-lowerbound) (1-upperbound)]
@@ -544,7 +619,7 @@ end #******************************end else
             Ones=(ones(Int64,col))'
             A=vcat(A, Ones)
 
-            model=Model(with_optimizer(GLPK.Optimizer))
+            model=Model(with_optimizer(Cbc.Optimizer,logLevel=0))
             @variable(model, x[i=1:length(possInd)],Int)
             row,col=size(symmIntervals)
 
@@ -555,14 +630,14 @@ end #******************************end else
             @constraint(model,con,A*x .==b)
             @constraint(model,con_1,x.>=0)
             optimize!(model)
-            if(!has_values(model))
+            if (termination_status(model)!=MOI.OPTIMAL)
                 return true
             end
         end #end while
 end
 
 
-function GAP(m,s)
+function GAP(m,s,min_al = 1//2)
     if m%s==0
         return 1
     end
@@ -571,7 +646,7 @@ function GAP(m,s)
     num=1
     denom=3
     while denom<=m*s
-        while alph<1//2
+        while alph<min_al
             append!(array,alph)
             num=num+1
             alph = num//denom
@@ -589,9 +664,14 @@ function GAP(m,s)
     end
     sort!(array)
     unique!(array)
+    for i=1:length(array)
+        if array[i]==91//222
+    #        println("*************  ",i)
+        end
+    end
 #    println(length(array))
     #println(array)
-    alpha = linearSearch(m,s,array)
+    alpha = binarySearchGAP(m,s,array)
 #    println(alpha)
 #    println(alpha)
     if alpha==-1
@@ -600,23 +680,35 @@ function GAP(m,s)
         return alpha
     end
 end
-#GAP(31,19)
-#GAP(41,19)
-#GAP(59,22)
-#GAP_proof(31,19,54//133)
-#GAP_proof(41,19,131//304)
-#GAP_proof(59,22,167//374)
-#GAP_proof(41,23,149//368)
-#GAP_proof(54,25,151//350)
-#GAP_proof(67,25,223//500)
+#GAP_proof(59,26,302//663)
+#VGAP(59,26,302//663)
 #GAP_proof(59,26,191//442)
-#GAP_proof(47,29,117//290)
-#GAP_proof(55,31,151//372)
-#GAP_proof(67,31,187//434)
-#GAP_proof(55,34,151//374)
-#VGAP(55,34,151//374)
-#VGAP(31,19,233//589)
-#GAP_proof(31,19,208//513)
-#GAP_proof(54,47,16//47)
-#GAP_proof(41,19,204,475)
-#perm(3,3)
+
+
+#for s = 3:60
+#    for m=s:70
+#        if (gcd(m,s)==1)
+#            println("m: ",m,"  s:  ",s,"  GAP:  ",GAP(m,s))
+#        end
+#    end
+#end
+#GAP_proof(31,19,54//133)
+#GAP(54,47)
+function pGap(m,s,alpha)
+    println("f(",m,",",s,")    ",GAP(m,s)==alpha)
+end
+if false
+pGap(29,23,39//115)
+pGap(32,25,17//50)
+pGap(31,27,37//108)
+pGap(52,31,89//217)
+pGap(38,33,34//99)
+pGap(39,34,47//136)
+pGap(62,37,91//222)
+pGap(43,39,53//156)
+pGap(50,39,9//26)
+pGap(67,40,197//480)
+pGap(47,41,85//246)
+end
+#pGap(62,37,91/222)
+GAP(69,32)
