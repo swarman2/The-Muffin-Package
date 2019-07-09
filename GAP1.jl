@@ -13,7 +13,7 @@ function VGAPV3_proof(m,s,alpha)
     xbuddy=1-x
     println("sᵥ: ",sᵥ,"   sᵥ₋₁: ",sᵥ₋₁)
 
-    if x>y
+    if x>=y
         println("INVALID INTERVALS")
         return false
     end
@@ -72,10 +72,9 @@ function VGAPV3_proof(m,s,alpha)
 #    endpoints=buddymatch(endpoints,V,y,m,s)
 
 row,col=size(endpoints)
-for i=1:row
-    if endpoints[i,1]+ endpoints[i,2]==1
-        endpoints=[endpoints; 1//2 1//2 ]
-    end
+
+endpoints=[endpoints; 1//2 1//2 ]
+
 
 endpoints = buddymatch(endpoints,V,y,m,s)
 row,col=size(endpoints)
@@ -87,7 +86,7 @@ row,col=size(endpoints)
 #endpoints=reshape(endpoints,(2,Int64(length(endpoints)/2)))
 #endpoints = transpose(endpoints)
 #endpoints = buddymatch(endpoints,V,y,m,s)
-end
+
 if V==3
     endpoints = [endpoints; [(m//2s) (m//2s)];[(m//2s) (m//2s)]]
     endpoints=sort(collect(Iterators.flatten(endpoints)))
@@ -96,7 +95,7 @@ if V==3
     row,col=size(endpoints)
 
     #special buddy match for closed interval
-    for i=1:row
+    for i=1:row -1
         #buddy
         row,col=size(endpoints)
         lower = endpoints[i,2]
@@ -482,18 +481,18 @@ end
 end
 
 function VGAPV3(m,s,alpha)
-
     V,sᵥ,sᵥ₋₁=SV(m,s)
-
     Vshares=V*sᵥ
     V₋₁shares=(V-1)*sᵥ₋₁
     x,y=FINDEND(m,s,alpha,V)
     ybuddy=1-y
     xbuddy=1-x
-    if x>y
-    #    println("INVALID INTERVALS")
+
+    if x>=y
+
         return false
     end
+
 #    println("x: ",x)
 #    println("y: ",y)
 #    println("1-x: ",1-x)
@@ -515,7 +514,7 @@ function VGAPV3(m,s,alpha)
         I2 = Int64(num_large_shares/2)
         I3 = I2
 
-        #println("TEST")
+#        println("TEST")
     else
         num_small_shares = V₋₁shares-Vshares
         num_large_shares =   Vshares
@@ -539,91 +538,100 @@ function VGAPV3(m,s,alpha)
     end #******************************end else
     #print_Intervals(m,s,alpha)
     endpoints=[alpha x]
-    endpoints=[endpoints;y (1-alpha)]
-    #display(endpoints)
-    endpoints=buddymatch(endpoints,V,y,m,s)
+    endpoints=[endpoints;y (1-alpha); xbuddy ybuddy]
+    #endpoints=sort(collect(Iterators.flatten(endpoints)))
+    #endpoints=reshape(endpoints,(2,Int64(length(endpoints)/2)))
+    #endpoints = transpose(endpoints)
 
+#    endpoints=buddymatch(endpoints,V,y,m,s)
+
+row,col=size(endpoints)
+
+        endpoints=[endpoints; 1//2 1//2 ]
+
+
+endpoints = buddymatch(endpoints,V,y,m,s)
+row,col=size(endpoints)
+
+#for i=1:row
+#    if endpoints[i,1]+endpoints[i,2] == (m//s)
+#endpoints=[endpoints; [m//2s m//2s]]
+#endpoints=sort(collect(Iterators.flatten(endpoints)))
+#endpoints=reshape(endpoints,(2,Int64(length(endpoints)/2)))
+#endpoints = transpose(endpoints)
+#endpoints = buddymatch(endpoints,V,y,m,s)
+
+if V==3
+    endpoints = [endpoints; [(m//2s) (m//2s)];[(m//2s) (m//2s)]]
+    endpoints=sort(collect(Iterators.flatten(endpoints)))
+    endpoints=reshape(endpoints,(2,Int64(length(endpoints)/2)))
+    endpoints = transpose(endpoints)
     row,col=size(endpoints)
 
-    for i=1:row
-        if endpoints[i,1]+ endpoints[i,2]==1
-            endpoints=[endpoints; 1//2 1//2 ]
+    #special buddy match for closed interval
+    for i=1:row -1
+        #buddy
+        row,col=size(endpoints)
+        lower = endpoints[i,2]
+        upper = endpoints[i+1,1]
+
+        buddyIn_1 = false
+        buddyIn_2=false
+        for k=1:row
+            row,col=size(endpoints)
+            for j=1:2
+                if endpoints[k,j] == 1-upper
+                    buddyIn_1=true
+                end
+                if endpoints[k,j]==1-lower
+                    buddyIn_2=true
+                end
+            end
         end
+        if buddyIn_1 == false || buddyIn_2 == false
 
-    end
-
-    endpoints = buddymatch(endpoints,V,y,m,s)
-    #for i=1:row
-    #    if endpoints[i,1]+endpoints[i,2] == (m//s)
-    if V==3
-        endpoints = [endpoints; [(m//2s) (m//2s)];[(m//2s) (m//2s)]]
-    #    end
-    #end
-
+            endpoints=[endpoints; [(1-upper) (1-lower)];  [(1-upper) (1-lower)]]
+            i=1
+            row,col=size(endpoints)
+        end
         endpoints=sort(collect(Iterators.flatten(endpoints)))
         endpoints=reshape(endpoints,(2,Int64(length(endpoints)/2)))
         endpoints = transpose(endpoints)
-        row,col=size(endpoints)
-
-        #special buddy match for closed interval
-        for i=1:row 
-            #buddy
-            row,col=size(endpoints)
-            lower = endpoints[i,2]
-            upper = endpoints[i+1,1]
-
-            buddyIn_1 = false
-            buddyIn_2=false
+        if lower>=y && V==3 #in the two shares
+        #    println("[",m//s-(1-lower),"  ",(m//s)-(1-upper),"] by matching [",1-upper,"  ",1-lower,"]")
+            matchIn_1 = false
+            matchIn_2=false
             for k=1:row
                 row,col=size(endpoints)
                 for j=1:2
-                    if endpoints[k,j] == 1-upper
-                        buddyIn_1=true
+                    if endpoints[k,j] ==m//s- upper
+                        matchIn_1=true
                     end
-                    if endpoints[k,j]==1-lower
-                        buddyIn_2=true
+                    if endpoints[k,j]==m//s-lower
+                        matchIn_2=true
                     end
                 end
             end
-            if buddyIn_1 == false || buddyIn_2 == false
-                endpoints=[endpoints; [(1-upper) (1-lower)];  [(1-upper) (1-lower)]]
+            if matchIn_1 == false || matchIn_2 == false
+                endpoints=[endpoints; [(m//s-upper) (m//s-lower)];  [(m//s-upper) (m//s-lower)]]
                 i=1
                 row,col=size(endpoints)
             end
-            endpoints=sort(collect(Iterators.flatten(endpoints)))
-            endpoints=reshape(endpoints,(2,Int64(length(endpoints)/2)))
-            endpoints = transpose(endpoints)
-            if lower>=y && V==3 #in the two shares
-            #    println("[",m//s-(1-lower),"  ",(m//s)-(1-upper),"] by matching [",1-upper,"  ",1-lower,"]")
-                matchIn_1 = false
-                matchIn_2=false
-                for k=1:row
-                    row,col=size(endpoints)
-                    for j=1:2
-                        if endpoints[k,j] ==m//s- upper
-                            matchIn_1=true
-                        end
-                        if endpoints[k,j]==m//s-lower
-                            matchIn_2=true
-                        end
-                    end
-                end
-                if matchIn_1 == false || matchIn_2 == false
-                    endpoints=[endpoints; [(m//s-upper) (m//s-lower)];  [(m//s-upper) (m//s-lower)]]
-                    i=1
-                    row,col=size(endpoints)
-                end
-            end
-            endpoints=sort(collect(Iterators.flatten(endpoints)))
-            endpoints=reshape(endpoints,(2,Int64(length(endpoints)/2)))
-            endpoints = transpose(endpoints)
         end
+        endpoints=sort(collect(Iterators.flatten(endpoints)))
+        endpoints=reshape(endpoints,(2,Int64(length(endpoints)/2)))
+        endpoints = transpose(endpoints)
     end
+end
+
+
+    row,col=size(endpoints)
+
     gap_found=true
     gap_found2=true
-    while(gap_found == true )#|| gap_found2 == true)
+    while(gap_found == true)# || gap_found2 == true)
         #buddy match it
-
+        endpoints = buddymatch(endpoints,V,y,m,s)
 
         row, col= size(endpoints)
         numIntervals = row
@@ -646,7 +654,9 @@ function VGAPV3(m,s,alpha)
             A=permV[i]
             sum_1=0
             sum_2=0
+
             for j =1:numVIntervals
+
                 sum_1=sum_1+A[j]*endpoints[j,1]
                 sum_2=sum_2+A[j]*endpoints[j,2]
             end
@@ -669,12 +679,10 @@ function VGAPV3(m,s,alpha)
             end
         end
 
-    #    println(possV_)
         mat_V=transpose(hcat(possV...))
     #    endpoints, gap_found = findGaps(mat_V, endpoints,m,s)
         mat_V_=transpose(hcat(possV_...))
         endpoints, gap_found = findGaps(mat_V,mat_V_, endpoints,m,s)
-        endpoints = buddymatch(endpoints,V,y,m,s)
     end #end finding gaps
 
 
@@ -723,9 +731,6 @@ function VGAPV3(m,s,alpha)
     end
     mat_V=transpose(hcat(possV...))
     mat_V_=transpose(hcat(possV_...))
-    if length(mat_V)==0 || length(mat_V_)==0
-        return true
-    end
 
     symmIntervals = Array{Int64,2}(undef,0,0) # row [i j] if interval i is symm to interval j
     row_endpt,col_endpt = size(endpoints)
@@ -741,34 +746,41 @@ function VGAPV3(m,s,alpha)
         end
     end
 
-    row_symm, col_symm = size(symmIntervals)
-    #display(symmIntervals)
-    for i=1:row_symm
-        for k=1:2
-            val = symmIntervals[i,k]
-            for j=1:row_symm
-                if j!=i && symmIntervals[j,1]==val
-                    symmIntervals = [symmIntervals; symmIntervals[i,k%2+1] symmIntervals[j,2]]
-                end
-                if j!=i && symmIntervals[j,2]==val
-                    symmIntervals = [symmIntervals; symmIntervals[i,k%2+1] symmIntervals[j,1]]
-                end
-            end
-        end
-    end
-    #display(symmIntervals)
-    sort!(symmIntervals,dims=2)
-    symmIntervals = unique(symmIntervals,dims =2)
-    row_symm, col_symm = size(symmIntervals)
+#    row_symm, col_symm = size(symmIntervals)
+#    #display(symmIntervals)
+#    for i=1:row_symm
+#        for k=1:2
+#            val = symmIntervals[i,k]
+#            for j=1:row_symm
+#                if j!=i && symmIntervals[j,1]==val
+#                    symmIntervals = [symmIntervals; symmIntervals[i,k%2+1] symmIntervals[j,2]]
+#                end
+#                if j!=i && symmIntervals[j,2]==val
+#                    symmIntervals = [symmIntervals; symmIntervals[i,k%2+1] symmIntervals[j,1]]
+#                end
+#            end
+#        end
+#    end
+#    #display(symmIntervals)
+#    sort!(symmIntervals,dims=2)
+#    symmIntervals = unique(symmIntervals,dims =2)
+#    println("\nSYMMETRIC INTERVALS")
+#    display(symmIntervals)
+        row_symm, col_symm = size(symmIntervals)
 
     #display(mat_V)
     #display(mat_V_)
-    #display(mat_V)
-    #display(mat_V_)
+
+    if length(mat_V)==0
+        return true
+    elseif length(mat_V_)==0
+        return true
+    end
     row_mat,col_mat = size(mat_V)
     row_mat_,col_mat_=size(mat_V_)
     row_mat_new=0
     while(row_mat_new < row_mat + row_mat_)
+#        println("test")
         Z= zeros(Int64,1,col_mat)
         mat_V = [mat_V; Z]
         row_mat_new,col_mat = size(mat_V)
@@ -787,18 +799,8 @@ function VGAPV3(m,s,alpha)
         poss_Dist = [poss_Dist zeros(row_Dist)]
         row_Dist, col_Dist = size(poss_Dist)
     end
-    #elseif length(permV)!=0
-    #    poss_Dist = mat_V
-    #else
-    #    poss_Dist = mat_V_
-    #end
-    #display(endpoints)
-    #display(poss_Dist)
+
     A=Array{Int64}(undef,0) # A will become the matrix in the eqation Ax=b
-    #display(symmIntervals)
-    if row_symm==0
-        return true
-    end
     for i=1:row_symm
         append!(A, (poss_Dist[:,symmIntervals[i,1]]-poss_Dist[:,symmIntervals[i,2]]))
     end
@@ -807,10 +809,14 @@ function VGAPV3(m,s,alpha)
     #A is now a matrix with rows correspoding to the symmetric identities
     #ex if the intervals are I1, I2, I3, I4, I5 (|I1|=|I4|,|I2|=|I3|)
     #A = [I1-I4 ; I2-I3]
-    row,col=size(symmIntervals)
+
+
+
+    A=unique(A, dims = 1)
+    row,col=size(A)
     #add zeros for each row of I₁ - I₂
     b=zeros(Int64,row)
-
+    #sum up cols in mat_V
     #sum up cols in mat_V
     if length(mat_V)!=0
         Sum_1 = mat_V[:,1]
@@ -836,6 +842,15 @@ function VGAPV3(m,s,alpha)
         #append as row to A
         A=[A;Sum_2]
     end
+
+
+
+    #Append a row of ones to A (num stud per distribtion adds to num VV students)
+
+    Ones=(ones(Int64,col))'
+#    if(V!=3)
+#        A=vcat(A, Ones)
+#    end
     split_Intervals_1 = Array{Int64}(undef,0)
     split_Intervals_2 = Array{Int64}(undef,0)
     if VV==V
@@ -860,6 +875,7 @@ function VGAPV3(m,s,alpha)
         end
     end
     #display(split_Intervals_1)
+    #display(split_Intervals_2)
     symm_sum_1 = Array{Int64}(undef,0)
     symm_sum_2 = Array{Int64}(undef,0)
     for i in split_Intervals_1
@@ -885,21 +901,16 @@ function VGAPV3(m,s,alpha)
         A=[A;symm_sum_1]
         b=[b;num_split_shares]
     end
-    if length(symm_sum_2)!=0
+    if length(symm_sum_2) !=0
         A=[A;symm_sum_2]
-        b=[b;num_split_shares]
+        b=[b; num_split_shares]
     end
 
-    #Append a row of ones to A (num stud per distribtion adds to num VV students)
     row,col=size(A)
-    Ones=(ones(Int64,col))'
-#    if(V!=3)
-#        A=vcat(A, Ones)
-#    end
-
     #display(A)
     model=Model(with_optimizer(Cbc.Optimizer, logLevel=0))
     @variable(model, x[i=1:col],Int)
+
     @constraint(model,con,A*x .==b)
     @constraint(model,con_1,x.>=0)
 
@@ -909,6 +920,7 @@ function VGAPV3(m,s,alpha)
     else
         return true
     end
+
 end
 
 function findGaps(possDistV,possDistV_,endpoints,m,s)
@@ -1398,5 +1410,7 @@ println(VGAPV3(50,39,9//26)) #proposed alpha 68/195
 println(VGAPV3(67,40,197//480))
 println(VGAPV3(47,41,85//246))
 end
-
+#VGAPV3_proof(31,24,151//432)
 #VGAPV3_proof(32,25,17//50)
+#VGAPV3_proof(11,10,37//110)
+#VGAPV3_proof(68,53,37//106)

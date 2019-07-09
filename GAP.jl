@@ -28,7 +28,7 @@ function binSearchHelpGAP(m,s,array,front,back)
         return 1
     end
     guessIndex =Int64(floor((front+back)/2))
-#    println("front: ",front,"  back: ",back,"  alpha: ",array[guessIndex])
+    #println("front: ",front,"  back: ",back,"  alpha: ",array[guessIndex])
     if guessIndex == front
         if VGAPV3(m,s,array[back])==true
             return array[back]
@@ -665,8 +665,8 @@ function GAP(m,s,min_al = 1//2)
     sort!(array)
     unique!(array)
     for i=1:length(array)
-        if array[i]==91//222
-    #        println("*************  ",i)
+        if array[i]==25//72
+            #println("*************  ",i)
         end
     end
 #    println(length(array))
@@ -711,4 +711,4 @@ pGap(67,40,197//480)
 pGap(47,41,85//246)
 end
 #pGap(62,37,91/222)
-GAP(69,32)
+#GAP(31,24)
