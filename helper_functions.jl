@@ -5,14 +5,22 @@ function Multiset(B,T,k)
     A=Dict{String,Vector{Vector{Int64}}}()
 
     i=length(B)
-    A,sol= Multiset_helper(B,A,i,T,k)
+    A,sol= Multiset_helper(B,A,i,T,k,time())
+    if A==-1
+        return "time out"
+    end
     #println("i: ",i,"  T: ",T,"  k: ",k)
     #println("SOL= ",sol)
     return sol
 
 end
-function Multiset_helper(B,A,i::Int64,T::Int64,k::Int64)
+function Multiset_helper(B,A,i::Int64,T::Int64,k::Int64, ogTime)
     #println("i: ",i," T: ",T," k: ",k)
+    currTime = time()
+    #println(currTime-ogTime)
+    if currTime-ogTime>10
+        return -1,-1
+    end
     if T <=0 || i == 0 || k==0
         #println("TEST1")
         return A,0
@@ -57,8 +65,14 @@ str=string(i)*string(T) * string(k)
     else
     #    println("TEST")
         sol=Vector{Vector{Int64}}()
-        A, Temp1=Multiset_helper(B,A, i-1,T,k)
-        A, Temp2=Multiset_helper(B,A, i,Int64(T-B[i]),k-1)
+        A, Temp1=Multiset_helper(B,A, i-1,T,k,ogTime)
+        if A == -1
+            return -1,-1
+        end
+        A, Temp2=Multiset_helper(B,A, i,Int64(T-B[i]),k-1,ogTime)
+        if A == -1
+            return -1,-1
+        end
 
         #if i==3 && T==20 && k==3
         #    println("T1: ",Temp1)
@@ -200,7 +214,11 @@ end
 #)
 function perm(n,r)
 #    println("n: ",n)
+
     B=Vector{Int64}(undef,0)
+    if r==0
+        return B
+    end
     X=Vector{Vector{Int64}}()
     for i=1:r
         push!(B,0)
