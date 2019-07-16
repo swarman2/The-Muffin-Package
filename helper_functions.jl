@@ -1,11 +1,13 @@
 #include("src\\permutations.jl") #for multiset_permutationsS
 #mulitsets of B that sum to T of size k
-function Multiset(B,T,k)
-
+function Multiset(B,T,k, time_limit=Inf)
+    #println("size of B: ",size(B))
+    #println("T: ",T)
+    #println("k: "k)
     A=Dict{String,Vector{Vector{Int64}}}()
 
     i=length(B)
-    A,sol= Multiset_helper(B,A,i,T,k,time())
+    A,sol= Multiset_helper(B,A,i,T,k,time(),time_limit)
     if A==-1
         return "time out"
     end
@@ -14,13 +16,14 @@ function Multiset(B,T,k)
     return sol
 
 end
-function Multiset_helper(B,A,i::Int64,T::Int64,k::Int64, ogTime)
+function Multiset_helper(B,A,i::Int64,T::Int64,k::Int64, ogTime,time_limit)
     #println("i: ",i," T: ",T," k: ",k)
     currTime = time()
     #println(currTime-ogTime)
-    if currTime-ogTime>10
+    if currTime-ogTime>time_limit
         return -1,-1
     end
+    #println("test")
     if T <=0 || i == 0 || k==0
         #println("TEST1")
         return A,0
@@ -65,11 +68,11 @@ str=string(i)*string(T) * string(k)
     else
     #    println("TEST")
         sol=Vector{Vector{Int64}}()
-        A, Temp1=Multiset_helper(B,A, i-1,T,k,ogTime)
+        A, Temp1=Multiset_helper(B,A, i-1,T,k,ogTime,time_limit)
         if A == -1
             return -1,-1
         end
-        A, Temp2=Multiset_helper(B,A, i,Int64(T-B[i]),k-1,ogTime)
+        A, Temp2=Multiset_helper(B,A, i,Int64(T-B[i]),k-1,ogTime,time_limit)
         if A == -1
             return -1,-1
         end

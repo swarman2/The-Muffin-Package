@@ -1,4 +1,4 @@
-function EBM(m::Int,s::Int)
+function EBM(m::Int64,s::Int64)
 
     #1
     if m%s == 0

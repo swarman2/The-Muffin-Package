@@ -1,7 +1,8 @@
 include("helper_functions.jl")
 using JuMP
 using Cbc
-function VGAPV3(m,s,alpha, proof=0)
+
+function VGAPV3(m,s,alpha, proof=false)
 
     V,sᵥ,sᵥ₋₁=SV(m,s)
     Vshares=V*sᵥ
@@ -12,11 +13,7 @@ function VGAPV3(m,s,alpha, proof=0)
 
     denom=denominator(alpha)
     denom=lcm(s,denom)*2
-    #if denom%2!=0
-    #    denom = 2*denom
-    #end
-    #println(denom)
-    if proof ==1 || proof ==2
+    if proof
         println()
         println("PROOF OF f(",m,", ",s,") = ",alpha)
         println("There are ",V,"-students and ",V-1,"-students")
@@ -56,13 +53,13 @@ function VGAPV3(m,s,alpha, proof=0)
     endpoints=sort(collect(Iterators.flatten(endpoints)))
     endpoints=reshape(endpoints,(2,Int64(length(endpoints)/2)))
     endpoints = transpose(endpoints)
-    if proof ==1 || proof ==2
+    if proof
         println("ENDPOINTS BEFORE BUDDY MATCH")
         endpoints=Int(endpoints)
         display(endpoints)
     end
     if x>=y
-        if proof ==1 || proof ==2
+        if proof
             println("INVALID INTERVALS")
         end
         return false
@@ -72,20 +69,21 @@ function VGAPV3(m,s,alpha, proof=0)
     endpoints=reshape(endpoints,(2,Int64(length(endpoints)/2)))
     endpoints = transpose(endpoints)
     #display(endpoints)
-    if proof ==1 || proof ==2
-        println("\nSPLIT AT 1/2 (",Int64(denom/2),") and  m//2s (",Int64(denom*m//2s),")")
+    if proof
+        println("\nSPLIT AT 1/2 (",Int64(denom),") and  m//2s (",Int64(denom*m//2s),")")
         #endpoints = Int(endpoints)
         #display(endpoints)
     end
-    endpoints = buddymatch(endpoints,V,y,m,s,denom)
+    endpoints = buddymatch(endpoints,V,y,m,s,denom,proof)
     #display(endpoints)
     row,col=size(endpoints)
     if V==3
         endpoints = [endpoints; [(m*denom//2s) (m*denom//2s)];[(m*denom//2s) (m*denom//2s)]]
+
         endpoints=sort(collect(Iterators.flatten(endpoints)))
         endpoints=reshape(endpoints,(2,Int64(length(endpoints)/2)))
         endpoints = transpose(endpoints)
-        if proof == 1 || proof == 2
+        if proof
         #    println("\nSPLIT AT m//2s (",Int64(denom*m//2s),")")
             endpoints = Int(endpoints)
             display(endpoints)
@@ -97,6 +95,7 @@ function VGAPV3(m,s,alpha, proof=0)
             row,col=size(endpoints)
             lower = endpoints[i,2]
             upper = endpoints[i+1,1]
+
             buddyIn_1 = false
             buddyIn_2=false
             for k=1:row
@@ -110,9 +109,8 @@ function VGAPV3(m,s,alpha, proof=0)
                     end
                 end
             end
-
-            if buddyIn_1 == false && buddyIn_2 == false && denom-upper >= endpoints[1,1] && denom-lower <= endpoints[row,col]
-                if proof ==1 || proof ==2
+            if buddyIn_1 == false && buddyIn_2 == false && denom-upper <= endpoints[1,1] && denom-lower >= endpoints[row,col]
+                if proof
                     println("[",Int64(denom-upper),"  ",Int64(denom-lower),"] by buddying [",Int64(lower),"  ",Int64(upper),"]")
                 end
                 endpoints=[endpoints; [(denom-upper) (denom-lower)];  [(denom-upper) (denom-lower)]]
@@ -136,8 +134,8 @@ function VGAPV3(m,s,alpha, proof=0)
                         end
                     end
                 end
-                if matchIn_1 == false && matchIn_2 == false && (m//s)*denom-upper >= endpoints[1,1] && (m//s)*denom-lower <= endpoints[row,col]
-                    if proof ==1 || proof ==2
+                if matchIn_1 == false && matchIn_2 == false && (m//s)*denom-upper <= endpoints[1,1] && (m//s)*denom-lower >= endpoints[row,col]
+                    if proof
                         println("[",Int64((m//s)*denom-upper),"  ",Int64((m//s)*denom-lower),"] by matching [",Int64(lower),"  ",Int64(upper),"]")
                     end
                     endpoints=[endpoints; [((m//s)*denom-upper) ((m//s)*denom-lower)];  [((m//s)*denom-upper) ((m//s)*denom-lower)]]
@@ -174,7 +172,7 @@ function VGAPV3(m,s,alpha, proof=0)
 
         possV = Vector{Vector{Int64}}()
         possV_ = Vector{Vector{Int64}}()
-        if proof ==1 || proof ==2
+        if proof
             endpoints = Int(endpoints)
             println("\n",V," intervals")
             for j=1:numVIntervals
@@ -190,18 +188,12 @@ function VGAPV3(m,s,alpha, proof=0)
             A=permV[i]
             sum_1=0
             sum_2=0
-            equal = true
-            #equal = false
+
             for j =1:numVIntervals
                 sum_1=sum_1+A[j]*endpoints[j,1]
                 sum_2=sum_2+A[j]*endpoints[j,2]
-                if A[j]!=0 && endpoints[j,1]!=endpoints[j,2]
-                    equal=false
-                end
             end
-            if !equal && (sum_1 < (m//s)*denom) && (sum_2 > (m//s)*denom)
-                append!(possV, permV[i,:])
-            elseif equal && (sum_1 <= (m//s)*denom) && (sum_2 >= (m//s)*denom)
+            if (sum_1 < (m//s)*denom) && (sum_2 > (m//s)*denom)
                 append!(possV, permV[i,:])
             end
         end
@@ -211,22 +203,15 @@ function VGAPV3(m,s,alpha, proof=0)
             A=permV_[i]
             sum_1=0
             sum_2=0
-            equal = true
-        #equal = false
             for j =numVIntervals+1:row
                 sum_1=sum_1+A[j-numVIntervals]*endpoints[j,1]
                 sum_2=sum_2+A[j-numVIntervals]*endpoints[j,2]
-                if A[j-numVIntervals]!=0 && endpoints[j,1]!=endpoints[j,2]
-                    equal=false
-                end
             end
-            if !equal && (sum_1 < (m//s)*denom) && (sum_2 > (m//s)*denom)
-                append!(possV_, permV_[i,:])
-            elseif equal && (sum_1 <= (m//s)*denom) && (sum_2 >= (m//s)*denom)
+            if (sum_1 < (m//s)*denom) && (sum_2 > (m//s)*denom)
                 append!(possV_, permV_[i,:])
             end
         end
-        if proof ==1 || proof ==2
+        if proof
             println("\nPossible ",V," students:")
             for i=1:length(possV)
                 PRINT(possV[i])
@@ -246,7 +231,7 @@ function VGAPV3(m,s,alpha, proof=0)
         endpoints, gap_found = findGaps(mat_V,mat_V_, endpoints,m,s,denom,proof)
     end #end finding gaps
 
-    if proof ==1 || proof ==2
+    if proof
         println("NO MORE GAPS")
         #println("ENDPOINTS AFTER BUDDY MATCH")
         #display(endpoints)
@@ -269,18 +254,11 @@ function VGAPV3(m,s,alpha, proof=0)
         A=permV[i]
         sum_1=0
         sum_2=0
-        equal = true
-        #equal = false
         for j =1:numVIntervals
             sum_1=sum_1+A[j]*endpoints[j,1]
             sum_2=sum_2+A[j]*endpoints[j,2]
-            if A[j]!=0 && endpoints[j,1]!=endpoints[j,2]
-                equal=false
-            end
         end
-        if !equal && (sum_1 < (m//s)*denom) && (sum_2 > (m//s)*denom)
-            append!(possV, permV[i,:])
-        elseif equal && (sum_1 <= (m//s)*denom) && (sum_2 >= (m//s)*denom)
+        if (sum_1 < (m//s)*denom) && (sum_2 > (m//s)*denom)
             append!(possV, permV[i,:])
         end
     end
@@ -290,18 +268,11 @@ function VGAPV3(m,s,alpha, proof=0)
         A=permV_[i]
         sum_1=0
         sum_2=0
-        equal = true
-        #equal = false
         for j =numVIntervals+1:row
             sum_1=sum_1+A[j-numVIntervals]*endpoints[j,1]
             sum_2=sum_2+A[j-numVIntervals]*endpoints[j,2]
-            if A[j-numVIntervals]!=0 && endpoints[j,1]!=endpoints[j,2]
-                equal=false
-            end
         end
-        if !equal && (sum_1 < (m//s)*denom) && (sum_2 > (m//s)*denom)
-            append!(possV_, permV_[i,:])
-        elseif equal && (sum_1 <= (m//s)*denom) && (sum_2 >= (m//s)*denom)
+        if (sum_1 < (m//s)*denom) && (sum_2 > (m//s)*denom)
             append!(possV_, permV_[i,:])
         end
     end
@@ -321,12 +292,10 @@ function VGAPV3(m,s,alpha, proof=0)
             end
         end
     end
-    if proof>=1
-        println("\nSYMMETRIC INTERVALS")
-        display(symmIntervals)
-    end
+    #println("\nSYMMETRIC INTERVALS")
+    #display(symmIntervals)
     row_symm, col_symm = size(symmIntervals)
-    if proof==1 || proof ==2
+    if proof
         println("\nPossible distributions of students for the ",V," shares:")
         for i=1:length(possV)
             PRINT(possV[i])
@@ -339,12 +308,12 @@ function VGAPV3(m,s,alpha, proof=0)
         end
     end
     if length(mat_V)==0
-        if proof==1 || proof ==2
+        if proof
             println("\nNo possible distributions of ",V," shares: alpha ≤ ",alpha)
         end
         return true
     elseif length(mat_V_)==0
-        if proof ==1 || proof ==2
+        if proof
             println("\nNo possible distributions of ",V-1," shares: alpha ≤ ",alpha)
         end
         return true
@@ -386,12 +355,9 @@ function VGAPV3(m,s,alpha, proof=0)
     #A = [I1-I4 ; I2-I3]
 
 
-
+    #println("\nIf intervals i and j are symmetric, subtract col i from col j and add as a row to A")
     A=unique(A, dims = 1)
-    if proof == 2
-        println("\nIf intervals i and j are symmetric, subtract col i from col j and add as a row to A")
-        display(A)
-    end
+    #display(A)
     row,col=size(A)
     #add zeros for each row of I₁ - I₂
     b=zeros(Int64,row)
@@ -421,10 +387,9 @@ function VGAPV3(m,s,alpha, proof=0)
         #append as row to A
         A=[A;Sum_2]
     end
-    if proof == 2
-        println("\nAdd a row of ",V,"'s and a row of ",V-1,"'s \n(these when mulitplied by number of each type of distribution of students will add to number of ",V," students and number of ",V-1," students)")
-        display(A)
-    end
+    #println("\nAdd a row of ",V,"'s and a row of ",V-1,"'s \n(these when mulitplied by number of each type of distribution of students will add to number of ",V," students and number of ",V-1," students)")
+    #append as rows to A
+    #display(A)
     #Append a row of ones to A (num stud per distribtion adds to num VV students)
     Ones=(ones(Int64,col))'
 
@@ -478,19 +443,14 @@ function VGAPV3(m,s,alpha, proof=0)
         A=[A;symm_sum_2]
         b=[b; num_split_shares]
     end
-
-
-    if proof ==2
-        println("\nAdd a rows for the sums of the ",VV," shares symmetric around 1//2")
-        display(A)
-        println("Then solve the system for the number of each type of distribtuion (= ",b,")")
-        display(A)
-    elseif proof ==1 || proof ==2
+    #println("\nAdd a rows for the sums of the ",VV," shares symmetric around 1//2")
+    #display(A)
+    if proof
         println("Then solve the system for the number of each type of distribtuion (= ",b,")")
     end
 
     row,col=size(A)
-
+    #display(A)
     model=Model(with_optimizer(Cbc.Optimizer, logLevel=0))
     @variable(model, x[i=1:col],Int)
 
@@ -499,20 +459,20 @@ function VGAPV3(m,s,alpha, proof=0)
 
     optimize!(model)
     if(termination_status(model)==MOI.OPTIMAL)
-        if proof == 1 || proof ==2
+        if proof
             display(value.(x))
             println("\nThere is a solution on the naturals, alpha > ",alpha)
         end
         return false
     else
-        if proof ==1 || proof ==2
+        if proof
             println("\nThere is no solution on the naturals, alpha ≤ ",alpha)
         end
         return true
     end
 end
 
-function findGaps(possDistV,possDistV_,endpoints,m,s,denom,proof = 0)
+function findGaps(possDistV,possDistV_,endpoints,m,s,denom,proof = false)
     #find gaps
     _gap=false
     numVDistributions,numVIntervals=size(possDistV)
@@ -633,7 +593,7 @@ function findGaps(possDistV,possDistV_,endpoints,m,s,denom,proof = 0)
                 upperbound=Int64(endpt[i])
                 lowerbound=Int64(endpt[2i])
                 if lowerbound>upperbound
-                    if proof ==1 || proof ==2
+                    if proof
                         println("NEW GAP FOUND: [",upperbound,",",lowerbound,"]")
                         k=1
                         for i=1:numVDistributions
@@ -657,7 +617,7 @@ function findGaps(possDistV,possDistV_,endpoints,m,s,denom,proof = 0)
 
             if temp_endpt[1]<endpoints[j,1] #then change upper bound
                 _gap=true
-                if proof == 1 || proof==2
+                if proof
                     println("GAP EXTENDED: ",Int64(newendpoints[j,2])," changed to ",Int64(temp_endpt[2]))
                 end
                 newendpoints[j,2]=temp_endpt[2]
@@ -674,11 +634,11 @@ function findGaps(possDistV,possDistV_,endpoints,m,s,denom,proof = 0)
                 end
             elseif temp_endpt[1]>endpoints[j,1]
                 _gap=true
-                if proof ==1 || proof ==2
+                if proof
                     println("GAP EXTENDED: ",Int64(newendpoints[j,1])," changed to ",Int64(temp_endpt[1]))
                 end
                 newendpoints[j,1]=temp_endpt[1]
-                if proof == 1 || proof ==2
+                if proof
                     k=1
                     for i=1:numVDistributions
                         if(possDistV[i,j]!=0)
@@ -808,7 +768,7 @@ function findGaps(possDistV,possDistV_,endpoints,m,s,denom,proof = 0)
                 upperbound=Int64(endpt[i])
                 lowerbound=Int64(endpt[2i])
                 if lowerbound>upperbound
-                    if proof ==1 || proof ==2
+                    if proof
                         println("NEW GAP FOUND: [",upperbound,",",lowerbound,"]")
                         k=1
                         for i=1:numV_Distributions
@@ -830,7 +790,7 @@ function findGaps(possDistV,possDistV_,endpoints,m,s,denom,proof = 0)
         elseif length(endpt)==1
             if temp_endpt[1]<endpoints[j,1] #then change upper bound
                 _gap=true
-                if proof ==1 || proof ==2
+                if proof
                     println("GAP EXTENDED: ",newendpoints[j,2]," changed to ",temp_endpt[2])
                 end
                 endpoints[j,2]=temp_endpt[2]
@@ -847,12 +807,12 @@ function findGaps(possDistV,possDistV_,endpoints,m,s,denom,proof = 0)
                 end
             elseif temp_endpt[1]>endpoints[j,1]
                 _gap=true
-                if proof==1 || proof ==2
+                if proof
                     println("GAP EXTENDED: ",newendpoints[j,1]," changed to ",temp_endpt[1])
                 end
                 endpoints[j,1]=temp_endpt[1]
                 k=1
-                if proof >=1
+                if proof
                     for i=1:numV_Distributions
                         if(possDistV_[i,j-numVIntervals]!=0)
                             print(lowEnd[k]," ≤ ")
@@ -873,7 +833,7 @@ function findGaps(possDistV,possDistV_,endpoints,m,s,denom,proof = 0)
     return newendpoints, _gap
 end
 
-function buddymatch(endpoints, V,y,m,s,denom,proof = 0)
+function buddymatch(endpoints, V,y,m,s,denom,proof = false)
     row,col=size(endpoints)
     i=1
     while i!=row
@@ -899,7 +859,7 @@ function buddymatch(endpoints, V,y,m,s,denom,proof = 0)
             end
         end
         if buddyIn_1 == false && buddyIn_2 == false && denom-upper >=endpoints[1,1] && denom-lower <= endpoints[row,col]
-            if proof ==1 || proof ==2
+            if proof
                 println("[",Int64(denom-upper),"  ",Int64(denom-lower),"] by buddying [",Int64(lower),"  ",Int64(upper),"]")
             end
             endpoints=[endpoints; [(denom-upper) (denom-lower)]]
@@ -923,8 +883,8 @@ function buddymatch(endpoints, V,y,m,s,denom,proof = 0)
                     end
                 end
             end
-            if matchIn_1 == false && matchIn_2 == false && (m//s)*denom-upper >= endpoints[1,1] && (m//s)*denom-lower <= endpoints[row,col]
-                if proof ==1 || proof ==2
+            if matchIn_1 == false && matchIn_2 == false && (m//s)*denom-upper <= endpoints[1,1] && (m//s)*denom-lower >= endpoints[row,col]
+                if proof
                     println("[",Int64((m//s)*denom-upper),"  ",Int64((m//s)*denom-lower),"] by matching [",Int64(lower),"  ",Int64(upper),"]")
                 end
                 endpoints=[endpoints; [((m//s)*denom-upper) ((m//s)*denom-lower)]]
@@ -987,111 +947,22 @@ function Int(matrix)
     return mat
 end
 
-
-
-function GAP(m,s,min_al = 1//2)
-    if m%s==0
-        return 1
-    end
-    array=Array{Rational}(undef,0)
-    alph = 1//3
-    num=1
-    denom=3
-    while denom<=m*s
-        while alph<min_al
-            append!(array,alph)
-            num=num+1
-            alph = num//denom
-        #    println(alph)
-    #        println(alph)
-        end
-        num=Int64(ceil(denom/3))
-        denom = denom+1
-        while (denom%s!=0)
-        #    println(denom)
-            denom=denom+1
-        end
-        alph = num//denom
-    #    println(alph)
-    end
-    sort!(array)
-    unique!(array)
-    for i=1:length(array)
-        if array[i]==37//108
-            #println("*************  ",i)
-        end
-    end
-
-    #println(array)
-    alpha = binarySearchGAP(m,s,array)
-    #    println(alpha)
-    #    println(alpha)
-    if alpha==-1
-        return 1
-    else
-        return alpha
-    end
-end
-#binary search, used in GAP uses PROC and VGAP to find the
-#alpha is a sorted array
-
-function binarySearchGAP(m,s,array)
-    return binSearchHelpGAP(m,s,array,1,length(array))
-end
-function binSearchHelpGAP(m,s,array,front,back)
-    #println("m: ",m,"  s: ",s)
-
-    if front>back
-        return 1
-    end
-    guessIndex =Int64(floor((front+back)/2))
-    #println("front: ",front,"  back: ",back,"  alpha: ",array[guessIndex])
-    if guessIndex == front
-        if VGAPV3(m,s,array[back])==true
-            return array[back]
-        else
-            return 1
-        end
-    end
-
-    if VGAPV3(m,s,array[guessIndex]) == true
-        return binSearchHelpGAP(m,s,array,front,guessIndex)
-    else
-        return binSearchHelpGAP(m,s,array,guessIndex, back)
-    end
-end
-
-function pGap(m,s,alpha)
-    x=GAP(m,s)
-    println("f(",m,",",s,")    ",x==alpha,"   ",x)
-end
-#println(GAP(29,23))
 if false
-pGap(29,23,39//115)
-pGap(32,25,17//50)
-pGap(31,27,37//108)
-pGap(52,31,89//217)
-pGap(38,33,34//99)
-pGap(39,34,47//136)
-pGap(62,37,91//222)
-pGap(43,39,53//156)
-pGap(50,39,9//26)
-pGap(67,40,197//480)
-pGap(47,41,85//246)
-
-for s=3:100
-    for m=s+1:110
-        if gcd(m,s) == 1
-            println("f(",m,",",s,") ≤ ",GAP(m,s))
-        end
-    end
+println(VGAPV3(29,23,39//115)) #proposed alpha 49/138
+println(VGAPV3(32,25,17//50))#proposed alpha 44/125
+println(VGAPV3(31,27,37//108))
+println(VGAPV3(52,31,89//217))
+println(VGAPV3(38,33,34//99))
+println(VGAPV3(39,34,47//136))
+println(VGAPV3(62,37,91//222))
+println(VGAPV3(43,39,53//156))
+println(VGAPV3(50,39,9//26)) #proposed alpha 68/195
+println(VGAPV3(67,40,197//480))
+println(VGAPV3(47,41,85//246))
 end
-end
-#VGAPV3(29,23, 39//115,2)
-#pGap(62,37,91/222)
-#GAP(31,24)
-#GAP(41,19)
-#VGAPV3(29,23,49//138,1)
-#println(GAP(31,27))
-#VGAPV3(31,27,103//297,1)
-#GAP(31,27)
+#VGAPV3(38,33,34//99,true)
+#VGAPV3(29,23,215//644,true)
+#VGAPV3_proof(32,25,17//50)
+#VGAPV3_proof(11,10,37//110)
+#VGAPV3_proof(68,53,37//106)
+#VGAPV3(29,23,172//483,true)

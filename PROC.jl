@@ -1,12 +1,13 @@
 #include("src/combinations.jl")
 #include("src/partitions.jl")
 include("helper_functions.jl")
-using JuMP
+using Cbc
 using GLPK
-
-function VProc(m,s,alphaa)
+using JuMP
+using Printf
+function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60)
 #Based on the book algorithm page 42
-
+    start_time=time()
     #denom is the least common mulitple between s and the
     #denominator of alpha (it is the denominator of the
     #fractions in the set of possible piece sizes [later called B])
@@ -28,9 +29,21 @@ function VProc(m,s,alphaa)
     #use Mulitset function (in helper_functions) to find
     #the possible mulitsets of piece sizes that sum to denom (1 whole muffin)
     #of sizes 2 (muffins cut into two pieces) or 3 (muffins cut into 3 pieces)
-    vec_1 = Multiset(B,Int64(denom),2)
-    vec_2 = Multiset(B,Int64(denom),3)
-
+    vec_1 = Multiset(B,Int64(denom),2, time_limit_multi)
+    if vec_1 == "time out"
+        println("MULTISET 1 TIME OUT:  length(B) = ",length(B),"  sets sum to: ",Int64(denom),"  sets of size: ",2)
+        str = @sprintf("MULTISET 2 TIME OUT:  length(B) = %i   sets sum to: %i  sets of size: %i",length(B),Int64(denom),2)
+        return -1,str
+    end
+    vec_2 = 0
+    if alphaa<1//3
+        vec_2 = Multiset(B,Int64(denom),3,time_limit_multi)
+        if vec_2 == "time out"
+            println("MULTISET 2 TIME OUT:  length(B) = ",length(B),"  sets sum to: ",Int64(denom),"  sets of size: ",3)
+            str = @sprintf("MULTISET 2 TIME OUT:  length(B) = %i   sets sum to: %i  sets of size: %i",length(B),Int64(denom),3)
+            return -1,str
+        end
+    end
     #Mulitset returns an array of arrays of the possible mulitsets
     #or 0 if no mulitsets found, combine the arrays of size 2 and 3
     #into one array of arrays
@@ -43,7 +56,10 @@ function VProc(m,s,alphaa)
     elseif vec_1==0 && vec_2==0
         return false
     end
-
+    if alphaa == 1//3
+        push!(vec_1, [denom/3; denom/3; denom/3])
+    end
+    #display(vec_1)
     #count how many times an element of B occurs in a vector
     # and convert to different form (ex B = {5 6 7} V={6 6}-> newV {0 2 0})
     A = Array{Int64,1}(undef,0)
@@ -62,8 +78,18 @@ function VProc(m,s,alphaa)
     #use Mulitset function (in helper_functions) to find
     #the possible mulitsets of studdent distributions that sum to denom *m/s
 #    println("length of B = ",length(B),"  m//s *denom = ",Int64((m//s)*denom))
-    vec_1 = Multiset(B,Int64((m//s)*denom),V)
-    vec_2 = Multiset(B,Int64((m//s)*denom),V-1)
+    vec_1 = Multiset(B,Int64((m//s)*denom),V,time_limit_multi)
+    if vec_1 == "time out"
+        println("MULTISET 3 TIME OUT:  length(B) = ",length(B),"  sets sum to: ",Int64((m//s)*denom),"  sets of size: ",V)
+        str = @sprintf("MULTISET 3 TIME OUT:  length(B) = %i   sets sum to: %i  sets of size: %i",length(B),Int64((m//s)*denom),V)
+        return -1,str
+    end
+    vec_2 = Multiset(B,Int64((m//s)*denom),V-1,time_limit_multi)
+    if vec_2 == "time out"
+        println("MULTISET 4 TIME OUT:  length(B) = ",length(B),"  sets sum to: ",Int64((m//s)*denom),"  sets of size: ",V-1)
+        str = @sprintf("MULTISET 4 TIME OUT:  length(B) = %i   sets sum to: %i  sets of size: %i",length(B),Int64((m//s)*denom),V-1)
+        return -1,str
+    end
 #    println("finished mulitsets")
     if(vec_1 !=0 && vec_2 !=0)
         for i=1:length(vec_2)
@@ -108,9 +134,9 @@ function VProc(m,s,alphaa)
     #set it equal to final_mat_2 (0's then num muff then num students)
     c = zeros(Int64,row_1)
     final_mat_2 = [c;m;s]
-
+    #println("time: ",time()-start_time)
     #solve the systems
-    model=Model(with_optimizer(GLPK.Optimizer))
+    model=Model(with_optimizer(Cbc.Optimizer,logLevel=0, seconds = time_limit_solv))
     @variable(model, x[i=1:col_1+col_2],Int)
     @constraint(model,con_1,x.>=0)
     @constraint(model,con_2,final_mat*x .==final_mat_2)
@@ -118,12 +144,18 @@ function VProc(m,s,alphaa)
 #    println("*******************")
 #    display(final_mat_2)
     optimize!(model)
-
+    #println("time2: ",time()-start_time)
     #return true if it has a solution, false otherwise
-    if(!has_values(model))
-        return false
+    if (termination_status(model)==MOI.TIME_LIMIT)
+        println("SOLVER TIME OUT  dim(A) = ",size(final_mat))
+        row,col = size(final_mat)
+        str = @sprintf("SOLVER TIME OUT  dim(A) = (%i, %i) ",row,col)
+        return -1,str
+    end
+    if(termination_status(model)==MOI.OPTIMAL)
+        return true,0
     else
-        return true
+        return false,0
     end
 end
 
@@ -148,7 +180,15 @@ function PROC(m,s,alphaa)
     B = collect(lower_bound_num:1:upper_bound_num)
 
     vec_1 = Multiset(B,Int64(denom),2)
+    if vec_1 == "time out"
+        println(vec_1)
+        return false
+    end
     vec_2 = Multiset(B,Int64(denom),3)
+    if vec_2 == "time out"
+        println(vec_2)
+        return false
+    end
     if(vec_1 !=0 && vec_2 !=0)
         for i=1:length(vec_2)
             push!(vec_1,vec_2[i])
@@ -172,7 +212,15 @@ function PROC(m,s,alphaa)
 
     V=Int64(ceil(2m/s))
     vec_1 = Multiset(B,Int64((m//s)*denom),V)
+    if vec_1 == "time out"
+        println(vec_1)
+        return false
+    end
     vec_2 = Multiset(B,Int64((m//s)*denom),V-1)
+    if vec_2 == "time out"
+        println(vec_2)
+        return false
+    end
     AA = Array{Int64,1}(undef,0)
     if(vec_1 !=0 && vec_2 !=0)
         for i=1:length(vec_2)
@@ -193,7 +241,7 @@ function PROC(m,s,alphaa)
     shape_2 = Int64(length(AA)/(length(B)))
     mat_2 = (reshape(AA,(length(B)),shape_2))
     mat_2=unique(mat_2,dims=2)
-    display(mat_2)
+    #display(mat_2)
 
     final_mat = [mat_1 (-mat_2)]
     row_1, col_1 = size(mat_1)
@@ -212,46 +260,82 @@ function PROC(m,s,alphaa)
     c = zeros(Int64,row_1)
     final_mat_2 = [c;m;s]
 
-    model=Model(with_optimizer(GLPK.Optimizer))
-    @variable(model, x[i=1:col_1+col_2],Int)
-    @constraint(model,con_1,x.>=0)
-    @constraint(model,con_2,final_mat*x .==final_mat_2)
-    optimize!(model)
-
-    if(!has_values(model))
-        println("No procedure found")
-        return false
-    end
     B=B//denom
+    denom=denom*2
+    #for k = 1:3
+        model=Model(with_optimizer(Cbc.Optimizer, logLevel =0))
+        @variable(model, x[i=1:col_1+col_2],Int)
+        @constraint(model,con_1,x.>=0)
+        @constraint(model,con_2,final_mat*x .==final_mat_2)
+        @objective(model, Max, x[1])
+        optimize!(model)
+        if(termination_status(model)!=MOI.OPTIMAL)
+            println("No procedure found")
+            return false
+        end
 
-    for i=1:col_1
-        if(value.(x)[i]!=0)
-            print("Cut ",Int64(value.(x)[i])," muffins {  ")
+        row,col=size(mat_1)
+        ogmat_1 = Matrix{Int64}(undef,row,col)
+        for i = 1:row
+            for j=1:col
+                ogmat_1[i,j]=mat_1[i,j]
+            end
+        end
+        row,col=size(mat_2)
+        ogmat_2 = Matrix{Int64}(undef,row,col)
+        for i = 1:row
+            for j=1:col
+                ogmat_2[i,j]=mat_2[i,j]
+            end
+        end
+    #    while termination_status(model) == MOI.OPTIMAL
 
-            for j=1:row_1
-                while(mat_1[j,i]>0)
-                    print(B[j],"  ")
-                    mat_1[j,i]=mat_1[j,i]-1
+            println("All numbers assumed to have denominator: ",denom)
+            for i=1:col_1
+                if(value.(x)[i]!=0)
+                    print("Cut ",Int64(value.(x)[i])," muffins {  ")
+
+                    for j=1:row_1
+                        while(mat_1[j,i]>0)
+                            print(Int64(B[j]*denom),"  ")
+                            mat_1[j,i]=mat_1[j,i]-1
+                        end
+                    end
+                    println("}")
                 end
             end
-            println("}")
-        end
-    end
 
-    for i=1:col_2
-        if(value.(x)[i+col_1]!=0)
-            print("Give ",Int64(value.(x)[i+col_1])," students {  ")
-            for j=1:row_1
-                while(mat_2[j,i]>0)
-                    print(B[j],"  ")
-                    mat_2[j,i]=mat_2[j,i]-1
+            for i=1:col_2
+                if(value.(x)[i+col_1]!=0)
+                    print("Give ",Int64(value.(x)[i+col_1])," students {  ")
+                    for j=1:row_1
+                        while(mat_2[j,i]>0)
+                            print(Int64(B[j]*denom),"  ")
+                            mat_2[j,i]=mat_2[j,i]-1
+                        end
+                    end
+                    println("}")
                 end
             end
-            println("}")
-        end
-    end
-    println()
-    println()
+            println()
+            println()
+            row,col=size(mat_1)
+            for i = 1:row
+                for j=1:col
+                    mat_1[i,j]=ogmat_1[i,j]
+                end
+            end
+            row,col=size(mat_2)
+            for i = 1:row
+                for j=1:col
+                    mat_2[i,j]=ogmat_2[i,j]
+                end
+            end
+    #        y=value.(x)
+    #        @constraint(model, x[1]<=y[1]-1)
+    #        optimize!(model)
+        #    println(termination_status(model))
+    #    end
 end
 
 #for k=1:20
@@ -263,3 +347,21 @@ end
 #VProc(5,3,5//12)
 #VProc(13,5,13//30)
 #VProc(17,15,7//20)
+#VProc(28,25,1//3)
+#PROC(29,23,49//138)
+#PROC(69,32,937//2176)
+#PROC(68,53,37//106)
+#PROC(107,13,365//754)
+#PROC(31,27,103//297)
+#PROC(86,17,86//187)
+#PROC(21,10,21//50)
+#
+
+#PROC(21,10,21//50)
+#PROC(31,10,31//70)
+#PROC(41,10, 41//90)
+#s = time()
+#VProc(67,21,41//90)
+#println(time()-s)
+
+    PROC(189,83,1143//2656)
