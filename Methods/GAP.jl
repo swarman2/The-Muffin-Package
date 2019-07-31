@@ -1,4 +1,4 @@
-include("helper_functions.jl")
+convert_Intinclude("helper_functions.jl")
 using JuMP
 using Cbc
 #if proof = 1 prints proof, if proof =2 prints proof with matrix
@@ -66,7 +66,7 @@ function VGAPV3(m,s,alpha, proof=0, ret_endpts = false)
     #######
     if proof ==1 || proof ==2
         println("ENDPOINTS BEFORE BUDDY MATCH")
-        endpoints=Int(endpoints)
+        endpoints=convert_Int(endpoints)
         display(endpoints)
     end
     if x>=y
@@ -164,7 +164,7 @@ end
         endpoints = transpose(endpoints)
         if proof == 1 || proof == 2
         #    println("\nSPLIT AT m//2s (",Int64(denom*m//2s),")")
-            endpoints = Int(endpoints)
+            endpoints = convert_Int(endpoints)
             display(endpoints)
         end
         row,col=size(endpoints)
@@ -248,7 +248,7 @@ end
         possV = Vector{Vector{Int64}}()
         possV_ = Vector{Vector{Int64}}()
         if proof ==1 || proof ==2
-            endpoints = Int(endpoints)
+            endpoints = convert_Int(endpoints)
             println("\n",V," intervals")
             for j=1:numVIntervals
                 println("J_",j,": ",endpoints[j,:])
@@ -1095,7 +1095,7 @@ function PRINT(array)
     end
     print(")")
 end
-function Int(matrix)
+function convert_Int(matrix)
     row,col=size(matrix)
     mat = Matrix{Int64}(undef, row,col)
     for i=1:row
