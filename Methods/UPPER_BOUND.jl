@@ -2,7 +2,7 @@ include("FC.jl")
 include("HALF.jl")
 include("INT.jl")
 include("EBM.jl")
-include("HBM.jl")
+include("HBM.jl")#
 include("helper_functions.jl")
 include("MID.jl")
 include("GAP.jl")

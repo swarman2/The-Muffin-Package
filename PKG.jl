@@ -1,37 +1,39 @@
-include("PROC.jl")
-include("FC.jl")
-include("HALF.jl")
-include("INT.jl")
-include("EBM.jl")
-include("HBM.jl")
-include("helper_functions.jl")
-include("MID.jl")
-include("GAP.jl")
-include("Train.jl")
-include("one_third_formula.jl")
+include("Methods//PROC.jl")
+include("Methods//FC.jl")
+include("Methods//HALF.jl")
+include("Methods//INT.jl")
+include("Methods//EBM.jl")
+include("Methods//HBM.jl")
+include("Methods//helper_functions.jl")
+include("Methods//MID.jl")
+include("Methods//GAP.jl")
+include("Methods//Train.jl")
+include("Methods//one_third_formula.jl")
 using Printf
 using DataFrames
+
 println()
 # load Taro - Pkg to read Excel Data
 using CSV
-
 using DelimitedFiles
+
+#include("setup.jl")
 function FIND_ALPHA(m,s, time_limit_multi = Inf, time_limit_solv = Inf, perc_array =0, scott_alpha = 0)
 
    start_time = time()
    V, sᵥ,sᵥ₋₁ = SV(m,s)
    t_multi = 0
    t_solv =0
-   if s>=3 && s<=9
-      FC_alpha = 1
-      INT_alpha = 1
-      HALF_alpha = 1
-      EBM_alpha = 1
-      HBD_alpha = 1
-      MID_alpha = 1
-      GAP_alpha = 1
-      TRAIN_alpha = 1
-      proc_bool = true
+   FC_alpha = 1
+   INT_alpha = 1
+   HALF_alpha = 1
+   EBM_alpha = 1
+   HBD_alpha = 1
+   MID_alpha = 1
+   GAP_alpha = 1
+   TRAIN_alpha = 1
+   proc_bool = true
+   #if s>=3 && s<=9
       if (m==11 && s==5) || (m==7 && s==6)||(m==8 && s==7)||(m==19 && s==7)||(m==10 && s==9)||(m==11 && s==9)||(m==29&&s==9)||(m==38 && s==9)||(m==47 && s==9)
          min_alpha = INT(m,s)
          INT_alpha = min_alpha
@@ -39,7 +41,7 @@ function FIND_ALPHA(m,s, time_limit_multi = Inf, time_limit_solv = Inf, perc_arr
          min_alpha = FC(m,s)
          FC_alpha = min_alpha
       end
-   else
+   #else
       FC_alpha = FC(m,s)
       INT_alpha = INT(m,s)
       HALF_alpha = HALF(m,s)
@@ -48,8 +50,6 @@ function FIND_ALPHA(m,s, time_limit_multi = Inf, time_limit_solv = Inf, perc_arr
       MID_alpha, MID_endpoints = MID(m,s, 1//2, true)
       alphas = [FC_alpha INT_alpha HALF_alpha EBM_alpha HBD_alpha MID_alpha]
       min_alpha = minimum(alphas)
-      GAP_alpha=1 #forward defintion
-      TRAIN_alpha = 1
       if(min_alpha != 1//3)
          GAP_alpha, GAP_endpoints = GAP(m,s,min_alpha, true)
          if GAP_alpha < min_alpha
@@ -78,7 +78,7 @@ function FIND_ALPHA(m,s, time_limit_multi = Inf, time_limit_solv = Inf, perc_arr
          proc_bool, err_mess, t_multi, t_solv = VProc(m,s,min_alpha, time_limit_solv, time_limit_multi, 0)
       end
 
-   end
+   #end
    if min_alpha ==1 && lcm(m,s)==1 || s==1
       print("   ",m,"   |   ",s,"   |  trivial   |  = ",1)
       str = " trivial "
@@ -94,6 +94,7 @@ function FIND_ALPHA(m,s, time_limit_multi = Inf, time_limit_solv = Inf, perc_arr
 
       if INT_alpha <= min_alpha
         print(" INT ")
+        GAP_alpha = min_alpha
         str = str * @sprintf(" INT ")
       end
 
@@ -115,6 +116,7 @@ function FIND_ALPHA(m,s, time_limit_multi = Inf, time_limit_solv = Inf, perc_arr
 
       if MID_alpha <= min_alpha
          print(" MID ")
+         GAP_alpha = min_alpha
          str =str* @sprintf(" MID " )
       end
 
@@ -178,34 +180,46 @@ function FIND_ALPHA(m,s, time_limit_multi = Inf, time_limit_solv = Inf, perc_arr
 end
 #FIND_ALPHA(107,13)
 
-function FIND_ALL(max_m,min_s, max_s, fileKey=0, have_file = false, Scott_data = false)
+
+#outputs alpha from m = s+1 to max_m and s= min_s to max_s
+#the file key is just a random number to help prevent files getting written over
+# have file is a bool that determines whether a text file is created
+#Scott data is a bool that determines wheter we use Scott or PROC to verify
+# csv_file is a bool that determines if we output to a csv
+function FIND_ALL(max_m,min_s, max_s, fileKey=0, have_file = false, Scott_data = false, csv_file = false)
    time_limit = 600
-   println("FILE KEY = ",fileKey)
    time_limit_multi = time_limit
    time_limit_solv =  time_limit
    perc_array = zeros(11)
+   dict = Dict{String, Int64}()
    if Scott_data
       df = CSV.read("C:/Users/Steph/Downloads/scott_bigrun.csv")
    end
-
+   stat_file = open(dirname(@__FILE__)*"\\DATA\\stats_"* string(max_m)*"_"*string(max_s)*"_"*string(fileKey)*".txt","w")
    #fileSolv = open(dirname(@__FILE__)*"\\July30_ScottVerified_Muffins_solv_time_"* string(max_m)*"_"*string(max_s)*"_"*string(fileKey)*".txt","w")
    #fileMulti = open(dirname(@__FILE__)*"\\July30_ScottVerified_Muffins_multi_time_"* string(max_m)*"_"*string(max_s)*"_"*string(fileKey)*".txt","w")
    #file_backup =open(dirname(@__FILE__)*"\\backup.txt","w")
-   if Scott_data
-      file = open(dirname(@__FILE__)*"\\July30_ScottVerified_"* string(max_m)*"_"*string(max_s)*"_"*string(fileKey)*".txt","w")
-   else
-      file = open(dirname(@__FILE__)*"\\July30_PROCVerified_"* string(max_m)*"_"*string(max_s)*"_"*string(fileKey)*".txt","w")
+   if Scott_data && have_file
+      file = open(dirname(@__FILE__)*"\\DATA\\July30_ScottVerified_"* string(max_m)*"_"*string(max_s)*"_"*string(fileKey)*".txt","w")
+   elseif have_file
+      println("FILE KEY = ",fileKey)
+      file = open(dirname(@__FILE__)*"\\DATA\\July30_PROCVerified_"* string(max_m)*"_"*string(max_s)*"_"*string(fileKey)*".txt","w")
    end
    #file2 = open(dirname(@__FILE__)*"\\July30_ScottVerified_not_match_SCOTT_"* string(max_m)*"_"*string(max_s)*"_"*string(fileKey)*".txt","w")
    row_df = 1
    #println("test")
-   #timed_out=Array{Int64}(undef,0)
-   start=time()
+      #timed_out=Array{Int64}(undef,0)
+      start=time()
       println("   M   |   S   |   Method   |      α   |       runtime   ")
       println("---------------------------------------")
-      str = @sprintf("   M   |   S   |   Method   |      α   \n---------------------------------------\n")
-      #DF = DataFrame(A = Int64[], B = String[])
-      #data_frame = DataFrame( m = Int64[], s = Int64[] , Method = String[] ,Equality = String[] , alpha = Any[] , Runtime = Any[] )
+      if have_file
+         str = @sprintf("   M   |   S   |   Method   |      α   \n---------------------------------------\n")
+         println(file,str)
+      end
+      if csv_file
+         data_frame = DataFrame( m = Int64[], s = Int64[] , Method = String[] ,Equality = String[] , alpha = Any[] , Runtime = Any[] )
+      end
+
       for s = min_s:max_s
          for m = s+1:max_m
             if gcd(m,s)==1
@@ -232,7 +246,15 @@ function FIND_ALL(max_m,min_s, max_s, fileKey=0, have_file = false, Scott_data =
                      alpha,string,str_eq,time, t_multi, t_solv = FIND_ALPHA(m,s,time_limit_multi, time_limit_solv, perc_array, scott_alpha)
                   #   println(file,"test2")
                   #   flush(file)
-                     #push!(data_frame,(m,s,string,str_eq,alpha,time))
+                  if haskey(dict,string)
+                     dict[string]=dict[string]+1
+                  else
+                     dict[string]=1
+                  end
+                     (minutes, seconds) = fldmod(time, 60)
+                     (hours, minutes) = fldmod(minutes, 60)
+                     time_str = @sprintf("%02d:%02d:%0.2f", hours, minutes, seconds)
+                     push!(data_frame,(m,s,string,str_eq,alpha,time_str))
                      #t_multi = round(t_multi, digits=2)
                      #t_solv = round(t_solv, digits =2)
                      #p = false
@@ -244,12 +266,14 @@ function FIND_ALL(max_m,min_s, max_s, fileKey=0, have_file = false, Scott_data =
                      #   println(fileSolv, m," | ",s," | multi: ",t_multi," | solv: ", t_solv)
                      #   p = true
                      #end
-                     if !Scott_data
+                     if !Scott_data && have_file
                         println(file, m," | ",s," | ",string," |",str_eq," ",alpha," | multi: ",t_multi," | solv: ", t_solv,"  | time: ",time)
-                     else
+                     elseif have_file
                         println(file, m," | ",s," | ",string," |",str_eq," ",alpha," | time: ",time)
                      end
-                     flush(file)
+                     if have_file
+                        flush(file)
+                     end
                      #println(fileSolv, m," | ",s," | multi: ",t_multi," | solv: ", t_solv)
                      #elapsed = time()-t
                      println()
@@ -265,46 +289,60 @@ function FIND_ALL(max_m,min_s, max_s, fileKey=0, have_file = false, Scott_data =
    TIME = (time()-start)
    (minutes, seconds) = fldmod(TIME, 60)
    (hours, minutes) = fldmod(minutes, 60)
-   println("FILE KEY = ",fileKey)
+
    @printf("%02d:%02d:%0.2f", hours, minutes, seconds)
-   @printf("\nFC: %0.2f %% ",100*(perc_array[1])/perc_array[10])
-   @printf("\nHALF: %0.2f %% ",100*(perc_array[2])/perc_array[10])
-   @printf("\nINT: %0.2f %% ",100*(perc_array[3])/perc_array[10])
-   @printf("\nMID: %0.2f %% ",100*(perc_array[4])/perc_array[10])
-   @printf("\nEBM: %0.2f %% ",100*(perc_array[5])/perc_array[10])
-   @printf("\nHBM: %0.2f %% ",100*(perc_array[6])/perc_array[10])
-   @printf("\nGAP: %0.2f %% ",100*(perc_array[7])/perc_array[10])
-   @printf("\nTRAIN: %0.2f %% ",100*(perc_array[11])/perc_array[10])
-   @printf("\nTIME OUT: %0.2f %% ",100*(perc_array[8])/perc_array[10])
-   @printf("\n≤: %0.2f %% ",100*(perc_array[9])/perc_array[10])
+   @printf("\nFC: %i/%i ==> %0.2f %% ",perc_array[1],perc_array[10],100*(perc_array[1])/perc_array[10])
+   @printf("\nHALF: %i/%i ==> %0.2f %% ",perc_array[2],perc_array[10],100*(perc_array[2])/perc_array[10])
+   @printf("\nINT: %i/%i == >%0.2f %% ",perc_array[3],perc_array[10],100*(perc_array[3])/perc_array[10])
+   @printf("\nMID: %i/%i ==> %0.2f %% ",perc_array[4],perc_array[10],100*(perc_array[4])/perc_array[10])
+   @printf("\nEBM: %i/%i ==> %0.2f %% ",perc_array[5],perc_array[10],100*(perc_array[5])/perc_array[10])
+   @printf("\nHBM: %i/%i ==> %0.2f %% ",perc_array[6],perc_array[10],100*(perc_array[6])/perc_array[10])
+   @printf("\nGAP:%i/%i ==>  %0.2f %% ",perc_array[7],perc_array[10],100*(perc_array[7])/perc_array[10])
+   @printf("\nTRAIN: %i/%i ==> %0.2f %% ",perc_array[11],perc_array[10],100*(perc_array[11])/perc_array[10])
+   @printf("\nTIME OUT: %i/%i ==> %0.2f %% ",perc_array[8],perc_array[10],100*(perc_array[8])/perc_array[10])
+   @printf("\n≤: %i/%i ==> %0.2f %% ",perc_array[9],perc_array[10],100*(perc_array[9])/perc_array[10])
+   if have_file
+      println()
+      println("\nFILE KEY = ",fileKey)
+      println()
+      @printf(file,"%02d:%02d:%0.2f", hours, minutes, seconds)
+      @printf(file,"\nFC: %i/%i ==> %0.2f %% ",perc_array[1],perc_array[10],100*(perc_array[1])/perc_array[10])
+      @printf(file,"\nHALF: %i/%i ==> %0.2f %% ",perc_array[2],perc_array[10],100*(perc_array[2])/perc_array[10])
+      @printf(file,"\nINT: %i/%i == >%0.2f %% ",perc_array[3],perc_array[10],100*(perc_array[3])/perc_array[10])
+      @printf(file,"\nMID: %i/%i ==> %0.2f %% ",perc_array[4],perc_array[10],100*(perc_array[4])/perc_array[10])
+      @printf(file,"\nEBM: %i/%i ==> %0.2f %% ",perc_array[5],perc_array[10],100*(perc_array[5])/perc_array[10])
+      @printf(file,"\nHBM: %i/%i ==> %0.2f %% ",perc_array[6],perc_array[10],100*(perc_array[6])/perc_array[10])
+      @printf(file,"\nGAP:%i/%i ==>  %0.2f %% ",perc_array[7],perc_array[10],100*(perc_array[7])/perc_array[10])
+      @printf(file,"\nTRAIN: %i/%i ==> %0.2f %% ",perc_array[11],perc_array[10],100*(perc_array[11])/perc_array[10])
+      @printf(file,"\nTIME OUT: %i/%i ==> %0.2f %% ",perc_array[8],perc_array[10],100*(perc_array[8])/perc_array[10])
+      @printf(file,"\n≤: %i/%i ==> %0.2f %% ",perc_array[9],perc_array[10],100*(perc_array[9])/perc_array[10])
+         close(file)
+   end
+   for k in keys(dict)
+      println(k," ==> ",dict[k],"/",perc_array[10]," = ",round(100*dict[k]/perc_array[10],digits=2),"%")
+      println(stat_file, k," ==> ",dict[k],"/",perc_array[10]," = ",round(100*dict[k]/perc_array[10],digits = 2),"%")
+   end
 
-   @printf(file, "\n%02d:%02d:%0.2f", hours, minutes, seconds)
-   @printf(file, "\nFC: %0.2f %% ",100*(perc_array[1])/perc_array[10])
-   @printf(file, "\nHALF: %0.2f %% ",100*(perc_array[2])/perc_array[10])
-   @printf(file, "\nINT: %0.2f %% ",100*(perc_array[3])/perc_array[10])
-   @printf(file, "\nMID: %0.2f %% ",100*(perc_array[4])/perc_array[10])
-   @printf(file, "\nEBM: %0.2f %% ",100*(perc_array[5])/perc_array[10])
-   @printf(file, "\nHBM: %0.2f %% ",100*(perc_array[6])/perc_array[10])
-   @printf(file, "\nGAP: %0.2f %% ",100*(perc_array[7])/perc_array[10])
-   @printf(file, "\nTRAIN: %0.2f %% ",100*(perc_array[11])/perc_array[10])
-   @printf(file, "\nTIME OUT: %0.2f %% ",100*(perc_array[8])/perc_array[10])
-   @printf(file, "\n≤: %0.2f %% ",100*(perc_array[9])/perc_array[10])
-
-
-   close(file)
+close(stat_file)
    #close(file2)
    #println(perc_array[9])
-   if have_file
-      #str = dirname(@__FILE__)*"\\Muffins_m"*string(max_m)*"_s"*string(max_s)*"_"*string(time_limit)*"_output.csv"
-      #CSV.write(dirname(@__FILE__)*"\\Muffins_m"*string(max_m)*"_s"*string(max_s)*"_output.csv", data_frame)
-      #println("file created at: ",str)
+   if csv_file && Scott_data
+      str = dirname(@__FILE__)*"\\DATA\\Muffins_ScottVerified_"*string(max_m)*"_"*string(max_s)*"_output.csv"
+      CSV.write(str, data_frame)
+      println()
+      println("file created at: ",str)
+   elseif csv_file
+      str = dirname(@__FILE__)*"\\DATA\\Muffins_PROCVerified_"*string(max_m)*"_"*string(max_s)*"_output.csv"
+      CSV.write(str, data_frame)
+      println("file created at: ",str)
    end
 end
 #INT(11,9)
 #PROC(11,10,7//20)
 #VMID(11,10,7//20,true)
 #println(rand(1000:9999))
-   FIND_ALL(110,3,100,rand(1000:9999),true, true)
+   FIND_ALL(110,3,100,rand(1000:9999),true,false,true)
+   #VProc(5,4,3//8,60,60,0,1)
 #FIND_ALPHA(58,45)
 #PROC(19,15,7//20)
 #VProc(49,10,41//90)

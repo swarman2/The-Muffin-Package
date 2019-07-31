@@ -1,5 +1,4 @@
 function EBM(m::Int64,s::Int64, proof = false)
-
     #1
     if m%s == 0
       return 1

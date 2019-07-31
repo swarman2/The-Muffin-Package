@@ -1,5 +1,4 @@
-#include("src/combinations.jl")
-#include("src/partitions.jl")
+
 include("helper_functions.jl")
 using Cbc
 using GLPK
@@ -38,7 +37,10 @@ function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 
     B = collect(lower_bound_num:1:upper_bound_num)
     B_1 = collect(lower_bound_num:1:x*denom)
     B_2 = collect(y*denom: upper_bound_num)
-
+    #println(B)
+    #println(B_1)
+    #println(B_2)
+    #println(x,"  ",y)
     if Endpts !=0
         B=Endpts
         i = 1
@@ -151,7 +153,6 @@ function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 
         end
 
     end
-
     vec_2_stu=Vector{Vector{Int64}}(undef,0)
     if length(B_2)==2
         i = V-1
@@ -349,14 +350,14 @@ function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 
         #println("B_1:  ",B_1)
         #println("B:  ",B)
         col_ = 1
-        while final_mat[1,col_]!=1
+        while final_mat[1,col_]==0
             col_=col_+1
             if col_ > col_1
                 break
             end
         end
         _col = 1
-        while final_mat[2,_col]!=1
+        while final_mat[2,_col]==0
             _col=_col+1
             if _col > col_1
                 break
@@ -365,6 +366,9 @@ function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 
         #display(final_mat)
         @constraint(model, x[col_] == numSm_B2*sᵥ//final_mat[1,col_])
         @constraint(model, x[_col] == numLg_B2*sᵥ//final_mat[2,_col])
+        #println("x[",col_,"] = ",numSm_B2*sᵥ//final_mat[1,col_])
+        #println(numLg_B2," * ",sᵥ,"//",final_mat[2,_col])
+        #println("x[",_col,"] = ",numLg_B2*sᵥ//final_mat[2,_col])
     elseif length(B_2)==2 && 1-xbuddy<y
 
         #println("B_1:  ",B_1)

@@ -1,4 +1,4 @@
-#include("src\\permutations.jl") #for multiset_permutationsS
+
 #mulitsets of B that sum to T of size k
 function Multiset(B,T,k, time_limit=Inf)
     A=Dict{String,Vector{Vector{Int64}}}()
