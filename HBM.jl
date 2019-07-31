@@ -6,15 +6,15 @@ function COND(X, a, d)
     end
 end
 
-function HBM(m, s)
+function HBM(m, s, proof = false)
     if m%s == 0
       return 1
     end
 
-d = Int64(m - s)
-k = Int64(floor(s/(3d)))
-a = Int64(s - 3d * k)
-possX = Array{Rational}(undef, 0)
+    d = Int64(m - s)
+    k = Int64(floor(s/(3d)))
+    a = Int64(s - 3d * k)
+    possX = Array{Rational}(undef, 0)
 
     if d >= 1 && k >= 1 && a <= 2 * d && gcd(a, d) == 1
 
@@ -115,7 +115,13 @@ possX = Array{Rational}(undef, 0)
         if length(possX) == 0
             return 1
         end
-        X = minimum(possX)
+        if proof
+            println("possible X's : ")
+            display(possX)
+            X = minimum(possX)
+            println("We take the minimum so X = ",X)
+            println("α ≤ (",d," * ",k," + ",X,")/(3 * ",d," * ",k," + ",a,") = ",(d * k + X)//(3d * k + a))
+        end
         return (d * k + X)//(3d * k + a)
     end
     return 1

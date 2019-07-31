@@ -2,10 +2,7 @@ include("helper_functions.jl")
 using JuMP
 using GLPK
 
-#function NPROC(m,s)
 function one_thrd(m,s, proof = 0)
-    #m = 11
-    #s = 5
     if proof >=1
         println("f(",m,", ",s,") ≥ 1//3 proof")
     end
@@ -102,8 +99,6 @@ function one_thrd(m,s, proof = 0)
         end
     end
 
-    #println()
-
     if half_to_W  # 11/5
        if length(type2stud)>=2
           push!(type2stud[1],1//2)
@@ -153,7 +148,6 @@ function one_thrd(m,s, proof = 0)
         end
         x_half = 1
         new_piece = 1-missing_piece
-        #println(new_piece)
         for i = 1:length(type1stud)
             if sum(type1stud[i])!=m//s
                 x_half = abs(1//2 - (m//s - sum(type1stud[i])-new_piece))
@@ -167,7 +161,6 @@ function one_thrd(m,s, proof = 0)
                 break
             end
         end
-        #println(x_half, "   ",y_half)
         if x_half < y_half
             for i=1:length(type1stud)
                 if sum(type1stud[i])!=m//s
@@ -267,13 +260,3 @@ function one_thrd(m,s, proof = 0)
     end
     return valid
 end
-if false
-for i=3:30
-    for j = i+1:50
-        if gcd(j,i)==1
-            println("f(",j,", ",i,") == 1//3 | ",one_thrd(j,i))
-        end
-    end
-end
-end
-#one_thrd(5,4,1)

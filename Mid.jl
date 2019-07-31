@@ -1,8 +1,7 @@
-#include("src\\permutations.jl")
 include("helper_functions.jl")
 using JuMP
 using Cbc
-using LinearAlgebra
+#binary search using VMID
 function binarySearchMID(m,s,array)
     return binSearchHelpMID(m,s,array,1,length(array))
 end
@@ -14,10 +13,11 @@ function binSearchHelpMID(m,s,array,front,back)
     guessIndex =Int64(floor((front+back)/2))
     #println("m: ",m,"  s: ",s,"  alpha: ",array[guessIndex])
     if guessIndex == front
-        if VMID(m,s,array[back],false)==true
-            return array[back]
+        valid, endpoints = VMID(m,s,array[back],false, true)
+        if valid==true
+            return array[back], endpoints
         else
-            return 1
+            return 1,1
         end
     end
     if VMID(m,s,array[guessIndex],false) == true
@@ -27,16 +27,22 @@ function binSearchHelpMID(m,s,array,front,back)
     end
 end
 
-function VMID(m,s,alpha,proof = false)
+#VMID takes m,s,alpha and if proof is true prints a proof
+function VMID(m,s,alpha,proof = false, ret_endpts =false)
     V,sᵥ,sᵥ₋₁=SV(m,s)
     Vshares=V*sᵥ
     V₋₁shares=(V-1)*sᵥ₋₁
     x,y=FINDEND(m,s,alpha,V)
     xbuddy = 1-x
     ybuddy = 1-y
+    denom=denominator(alpha)
+    denom=lcm(s,denom)
     if x > y
         if proof
             println("intervals not disjoint alpha > ", alpha)
+        end
+        if ret_endpts
+            return false, 0
         end
         return false
     end
@@ -51,126 +57,152 @@ function VMID(m,s,alpha,proof = false)
             endpoints = [endpoints;[1//2 ybuddy]; [xbuddy (1-alpha)]]
         end
     end
+#    println(alpha,"  ", x,"  ", y,"  ", xbuddy,"  ", ybuddy," ", 1-alpha)
     if(V₋₁shares<Vshares)
-         num_small_shares = V₋₁shares
-        num_large_shares = Vshares - V₋₁shares
         S=sᵥ
-        shares=Vshares
         VV=V #which is split
-        I1 = num_small_shares
-        I2 = Int64(num_large_shares/2)
+        I1 = V₋₁shares
+        I2 = Int64((Vshares - V₋₁shares)/2)
         I3 = I2
-        #num_split_shares=Int64(num_large_shares/2)
 
     else
-        num_small_shares = V₋₁shares-Vshares
-        num_large_shares =   Vshares
         S=sᵥ₋₁
         shares=V₋₁shares
         VV=V-1 #which is split
-        I1=Int64(num_small_shares/2)
+        I1=Int64((V₋₁shares-Vshares)/2)
         I2=I1
-        I3=num_large_shares
-        #num_split_shares=Int64(num_small_shares/2)
-
+        I3=Vshares
     end #******************************end else
 
     row, col= size(endpoints)
-
     numIntervals = row
+
+    #find possible permutations
     X = perm(VV, numIntervals)
     possInd = Array{Int64}(undef,0)
 
-
-        X = perm(VV, numIntervals)
-        possInd = Array{Int64}(undef,0)
-
     #find possible students
-        for i=1:length(X)
-            A=X[i]
-            sum_1=0
-            sum_2=0
-            for j =1:numIntervals
-                sum_1=sum_1+A[j]*endpoints[j,1]
-                sum_2=sum_2+A[j]*endpoints[j,2]
-            end
-            if (sum_1 < m//s) && (sum_2 > m//s)
-                append!(possInd, i)
-            end
+    for i=1:length(X)
+        A=X[i]
+        sum_1=0
+        sum_2=0
+        for j =1:numIntervals
+            sum_1=sum_1+A[j]*endpoints[j,1]
+            sum_2=sum_2+A[j]*endpoints[j,2]
         end
+        if (sum_1 < m//s) && (sum_2 > m//s)
+            append!(possInd, i)
+        end
+    end
 
-        if length(possInd)==0
-            if proof
-                println("No possible muffin distributions")
-                println("alpha ≤ ",alpha)
-            end
-            return true
-        end
-
-        poss_Dist=reshape([],0,2) #possibe distributions of muffins
-        for i in possInd
-            if i == possInd[1]
-                poss_Dist=X[i,:]
-            else
-                poss_Dist=[poss_Dist; X[i,:]]
-            end
-        end
-        #get it in the shape I want
-        poss_Dist = transpose(reshape(hcat(poss_Dist...), (length(poss_Dist[1]), length(poss_Dist))))
+    #if there are no possible distrubtions
+    if length(possInd)==0
         if proof
-            println("Possible muffin distributions")
-            row,col=size(poss_Dist)
-            for i=1:row
-                PRINT(poss_Dist[i,:])
-                println()
-            end
-        end
-        A = transpose(poss_Dist)
-
-        #Append a row of ones to A (num stud per distribtion adds to num VV students)
-        row,col=size(A)
-        Ones=(ones(Int64,col))'
-        A=vcat(A, Ones)
-        row = row+1
-        if proof
-            display(A)
-        end
-        model=Model(with_optimizer(Cbc.Optimizer, logLevel=0))
-        @variable(model, x[i=1:length(possInd)],Int)
-        b=[I1,I2,I3,S]
-        @constraint(model,con,A*x .==b)
-        @constraint(model,con_1[i=1:length(possInd)],x[i] >=0)
-        if proof
-            println("System of equations = ",b)
-            display(A)
-        end
-
-
-        optimize!(model)
-        if (termination_status(model) == MOI.OPTIMAL)
-            if proof
-                println()
-                println(value.(x))
-                println("There is a solution on the Naturals")
-            #println(value.(x))
-                println("alpha > ",alpha)
-                println()
-            end
-            return false
-        end
-        if proof
-            println("No solution on the Naturals")
+            println("No possible muffin distributions")
             println("alpha ≤ ",alpha)
         end
+        if ret_endpts
+            endpoints = collect(alpha*denom:1:(1-alpha)*denom)
+            array = [xbuddy, ybuddy, 1-xbuddy, y]
+            sort!(array)
+            array=array*denom
+            endpoints = filter(x -> x<=array[1]|| x>=array[2], endpoints)
+            endpoints = filter(x -> x<=array[3]|| x>=array[4], endpoints)
+            sort!(endpoints)
+            return true, endpoints
+        end
         return true
+    end
 
+    #make a matrix (poss_Dist) where each row is a
+    #way to distribute the pieces to the students
+    poss_Dist=reshape([],0,2) #possible distributions of muffins
+    for i in possInd
+        if i == possInd[1]
+            poss_Dist=X[i,:]
+        else
+            poss_Dist=[poss_Dist; X[i,:]]
+        end
+    end
+    #get it in the shape I want
+    poss_Dist = transpose(reshape(hcat(poss_Dist...), (length(poss_Dist[1]), length(poss_Dist))))
+
+    if proof
+        println("Possible muffin distributions")
+        row,col=size(poss_Dist)
+        for i=1:row
+            PRINT(poss_Dist[i,:])
+            println()
+        end
+    end
+
+    #A will be the matrix in our final matrix equation Ax=b
+    #the columns of A are the distrubtions of students
+    A = transpose(poss_Dist)
+
+    #Append a row of ones to A (num stud per distribtion adds to num VV students)
+    row,col=size(A)
+    Ones=(ones(Int64,col))'
+    A=vcat(A, Ones)
+    row = row+1
+
+    #b = the size of each interval and S (number of students)
+    b=[I1,I2,I3,S]
+
+    model=Model(with_optimizer(Cbc.Optimizer, logLevel=0))
+    @variable(model, x[i=1:length(possInd)],Int)
+
+    @constraint(model,con,A*x .==b)
+    @constraint(model,con_1[i=1:length(possInd)],x[i] >=0)
+    if proof
+        println("System of equations = ",b)
+        display(A)
+    end
+    optimize!(model)
+    if (termination_status(model) == MOI.OPTIMAL)
+        if proof
+            println()
+            println(value.(x))
+            println("There is a solution on the Naturals")
+        #println(value.(x))
+            println("alpha > ",alpha)
+            println()
+        end
+        if ret_endpts
+            endpoints = collect(alpha*denom:1:(1-alpha)*denom)
+            array = [xbuddy, ybuddy, 1-xbuddy, y]
+            sort!(array)
+            array=array*denom
+            endpoints = filter(x -> x<=array[1]|| x>=array[2], endpoints)
+            endpoints = filter(x -> x<=array[3]|| x>=array[4], endpoints)
+            sort!(endpoints)
+            return false, endpoints
+        end
+        return false
+    end
+    if proof
+        println("No solution on the Naturals")
+        println("alpha ≤ ",alpha)
+    end
+    if ret_endpts
+        endpoints = collect(alpha*denom:1:(1-alpha)*denom)
+        array = [xbuddy, ybuddy, 1-xbuddy, y]
+        sort!(array)
+        array=array*denom
+        endpoints = filter(x -> x<=array[1]|| x>=array[2], endpoints)
+        endpoints = filter(x -> x<=array[3]|| x>=array[4], endpoints)
+        sort!(endpoints)
+
+        return true, endpoints
+    end
+    return true
 end
-function MID(m,s,min_al=1//2)
-    #println("Test: m ",m,"  s ",s)
+function MID(m,s,min_al=1//2, ret_endpts = false)
     if m%s==0
-        return 1
+        return 1,1
     end
     array=Array{Rational}(undef,0)
+    #Find all numbers between 1/3 and 1/2 with denominator a multiple of s < m*s
     alph = 1//3
     num=1
     denom=3
@@ -179,36 +211,32 @@ function MID(m,s,min_al=1//2)
             append!(array,alph)
             num=num+1
             alph = num//denom
-        #    println(alph)
-    #        println(alph)
         end
         num=Int64(ceil(denom/3))
         denom = denom+1
         while (denom%s!=0)
-        #    println(denom)
             denom=denom+1
         end
         alph = num//denom
-    #    println(alph)
     end
     sort!(array)
     unique!(array)
     array = filter( x -> x > 1/3, array)
-    #for i = 1:length(array)
-    #    if array[i]==9//26
-        #    println(i)
-    #    end
-    #end
-
-    alpha = binarySearchMID(m,s,array)
-
-    if alpha==-1
-        return 1
+    alpha, endpoints = binarySearchMID(m,s,array)
+    if alpha == 1
+        return 1,1
+    end
+    if ret_endpts
+        #endpoints=sort(collect(Iterators.flatten(endpoints)))
+        endpoints = filter(x-> x!= 1//2, endpoints)
+        return alpha, endpoints
     else
         return alpha
     end
 end
 
+#Helper function used to print arrays in form used by book
+#(1 0 1) might go to (5/12 7/12)
 function PRINT(array)
     print("( ")
     for i=1:length(array)
@@ -218,6 +246,3 @@ function PRINT(array)
     end
     print(")")
 end
-#println(MID(33,26))
-#println(VMID(33,26,157//377,true))
-#MID(71,44)
