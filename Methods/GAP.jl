@@ -1095,7 +1095,7 @@ function PRINT(array)
     end
     print(")")
 end
-function convert_Int(matrix)
+function convert_Int(matrix::Matrix{Rational})
     row,col=size(matrix)
     mat = Matrix{Int64}(undef, row,col)
     for i=1:row
