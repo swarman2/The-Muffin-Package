@@ -1,4 +1,4 @@
-convert_Intinclude("helper_functions.jl")
+include("helper_functions.jl")
 using JuMP
 using Cbc
 #if proof = 1 prints proof, if proof =2 prints proof with matrix
