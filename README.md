@@ -14,9 +14,11 @@ Download and unzip all the files. Run *setup.jl* to download all the needed pack
 
 # Outside Packages Used
 Solvers:
-[JuMP](http://www.juliaopt.org/JuMP.jl/v0.17/installation.html) - a modeling language used to support the solvers
 
+  [JuMP](http://www.juliaopt.org/JuMP.jl/v0.17/installation.html) - a modeling language used to support the solvers
 
-[Cbc](https://github.com/JuliaOpt/Cbc.jl) and [GLPK](https://github.com/JuliaOpt/GLPK.jl)
+  [Cbc](https://github.com/JuliaOpt/Cbc.jl) and [GLPK](https://github.com/JuliaOpt/GLPK.jl)
 
-Data formatting and file I/O: Printf, Dates, Plots, CSV, DataFrames 
+Data formatting and file I/O: 
+
+  Printf, Dates, Plots, CSV, DataFrames 
