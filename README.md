@@ -13,18 +13,10 @@ To run a Julia file open the Julia REPL and type **include(*file_path*)**.
 Download and unzip all the files. Run *setup.jl* to download all the needed packages. To use the program run *user_interface.jl*.
 
 # Outside Packages Used
+Solvers:
+[JuMP](http://www.juliaopt.org/JuMP.jl/v0.17/installation.html) - a modeling language used to support the solvers
 
-JuMP - a modeling language 
-@article{DunningHuchetteLubin2017,
-author = {Iain Dunning and Joey Huchette and Miles Lubin},
-title = {JuMP: A Modeling Language for Mathematical Optimization},
-journal = {SIAM Review},
-volume = {59},
-number = {2},
-pages = {295-320},
-year = {2017},
-doi = {10.1137/15M1020575},
-}
-Solvers: [Cbc](https://github.com/JuliaOpt/Cbc.jl) and [GLPK](https://github.com/JuliaOpt/GLPK.jl)
+
+[Cbc](https://github.com/JuliaOpt/Cbc.jl) and [GLPK](https://github.com/JuliaOpt/GLPK.jl)
 
 Data formatting and file I/O: Printf, Dates, Plots, CSV, DataFrames 
