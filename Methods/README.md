@@ -1,6 +1,6 @@
 # Upper-Bound Techniques 
-FC => Floor-Ceiling Method described in chapter 4 of *The Mathematics of Muffins*//
-HALF => Half Method described in chapter 6 of *The Mathematics of Muffins*//
+FC => Floor-Ceiling Method described in chapter 4 of *The Mathematics of Muffins* <br/>
+HALF => Half Method described in chapter 6 of *The Mathematics of Muffins* <br/>
 INT => Interval Method described in chapter 8 of *The Mathematics of Muffins*//
 MID => Midpoint Method described in chapter 9 of *The Mathematics of Muffins*//
 EBM => Easy Buddy-Match Method described in chapter 10 of *The Mathematics of Muffins*//
