@@ -19,10 +19,10 @@ The menu will look like this
     2. Given a range of m and s find all largest possible smallest pieces
     3. Quit
 
-## Basic functionality:
+#### Basic functionality:
    * Any user input is not case sensitive
    * To get back to the menu enter "q" at an input prompt
-## Option 1: Given m and s what is the largest possible smallest piece
+#### Option 1: Given m and s what is the largest possible smallest piece
 The following prompts will get you to enter an amount of muffins (m) and an amount of students (s)
 
 * Constraints on m and s: 
@@ -54,7 +54,7 @@ If you press 1 a procedure will be printed *warning: this will take roughly the 
 
 If you enter m less than s, it will calculate f(s,m) and then use the duality thereom. 
 
-## Option 2: Given a range of m and s find all largest possible smallest pieces
+#### Option 2: Given a range of m and s find all largest possible smallest pieces
   The goal of this option is to output a range of largest smallest possible pieces with parameters:
   
   
@@ -93,7 +93,7 @@ If you enter m less than s, it will calculate f(s,m) and then use the duality th
 * the amount of times the methods overlapped with each other
 * the percent of data solved after adding in a method
   
- **stats are only are saved if you chose to have a txt file*
+ *stats are only are saved if you chose to have a txt file*
     
 # Outside Packages Used
 Solvers:
