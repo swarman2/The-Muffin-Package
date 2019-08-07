@@ -61,31 +61,38 @@ If you enter m less than s, it will calculate f(s,m) and then use the duality th
   *s < m $\le$ max m         min s $\le$ s $\le$ max s*    
   
   The following prompts will ask you to enter max_m, min_s and max_s. 
-  
+   
+              Enter max m: 
+              Enter min s: 
+              Enter max s: 
+
   
   Then a settings menu will appear that will allow you to set the settings for your run.
-    Enter 1 to change the range
-    Enter 2 to store in a csv file
-    Enter 3 to store in a txt file
-    Enter 4 to switch between PROC being used to verify and SCOTT being used to verify
-    Enter 5 to change the time limit
-    Enter 6 to only go up to m = s squared for each s
-  Enter 0 to lock in your settings
+  
+ * Enter 1 to change the range
+ * Enter 2 to store in a csv file
+ * Enter 3 to store in a txt file
+ * Enter 4 to switch between PROC being used to verify and SCOTT being used to verify
+ * Enter 5 to change the time limit
+ * Enter 6 to only go up to m = s squared for each s
+ * Enter 0 to lock in your settings
   
   You can also enter a comma seperated list of the settings you want (ex: 1,2,4)
  
   Any files created will be saved in the DATA folder.
+  
   A new folder specific to the run will be created. It's name will end in a "run key" which is a random three digit number. 
   
-  Once you have locked in your settings walk aways have a cup of coffee.\\
-  When the run finishes some stats are printed in addition to the data\\
-  <ul>
-    <li>runtime<\li>
-    <li>the amount of times each method was used\<\li>
-    <li>amount of times none of the methods worked (and if that was due to it timing out or not)<\li>
-    <li>the amount of times the methods overlapped with each other<\li>
-    <li>the percent of data solved after adding in a method<\li>
-  <\ul>
+  Once you have locked in your settings walk aways have a cup of coffee.
+  
+  When the run finishes some stats are printed in addition to the data
+  
+* runtime
+* the amount of times each method was used
+* amount of times none of the methods worked (and if that was due to it timing out or not)
+* the amount of times the methods overlapped with each other
+* the percent of data solved after adding in a method
+  
  **stats are only are saved if you chose to have a txt file*
     
 # Outside Packages Used
