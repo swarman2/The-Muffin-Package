@@ -19,12 +19,13 @@ The menu will look like this
     2. Given a range of m and s find all largest possible smallest pieces
     3. Quit
 
-**Basic functionality:**
+## Basic functionality:
 
    * Any user input is not case sensitive
    * To get back to the menu enter "q" at an input prompt
 
-**Option 1 : Given m and s what is the largest possible smallest piece**
+## Option 1: Given m and s what is the largest possible smallest piece
+
     The following prompts will get you to enter an amount of muffins (m) and an amount of students (s)
     * Constraints on m and s: 
         * m cannot be divisible by s
