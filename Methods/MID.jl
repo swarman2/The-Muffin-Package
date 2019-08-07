@@ -1,34 +1,12 @@
+#for information on this method see chapter 10 of "The Mathematics of Muffins"
 include("helper_functions.jl")
 using JuMP
 using Cbc
-#binary search using VMID
-function binarySearchMID(m,s,array)
-    return binSearchHelpMID(m,s,array,1,length(array))
-end
-function binSearchHelpMID(m,s,array,front,back)
-    #println("front: ",front,"  back: ",back)
-    if front>back
-        return 1
-    end
-    guessIndex =Int64(floor((front+back)/2))
-    #println("m: ",m,"  s: ",s,"  alpha: ",array[guessIndex])
-    if guessIndex == front
-        valid, endpoints = VMID(m,s,array[back],false, true)
-        if valid==true
-            return array[back], endpoints
-        else
-            return 1,1
-        end
-    end
-    if VMID(m,s,array[guessIndex],false) == true
-        return binSearchHelpMID(m,s,array,front,guessIndex)
-    else
-        return binSearchHelpMID(m,s,array,guessIndex, back)
-    end
-end
 
 #VMID takes m,s,alpha and if proof is true prints a proof
+#ret_endpts is used in PKG to pass the MID endpoints to PROC (speeds up Mulitsets)
 function VMID(m,s,alpha,proof = false, ret_endpts =false)
+    #setup with some information
     V,sᵥ,sᵥ₋₁=SV(m,s)
     Vshares=V*sᵥ
     V₋₁shares=(V-1)*sᵥ₋₁
@@ -37,6 +15,8 @@ function VMID(m,s,alpha,proof = false, ret_endpts =false)
     ybuddy = 1-y
     denom=denominator(alpha)
     denom=lcm(s,denom)
+
+    #if the intervals are not disjoint return false
     if x > y
         if proof
             println("intervals not disjoint alpha > ", alpha)
@@ -46,7 +26,10 @@ function VMID(m,s,alpha,proof = false, ret_endpts =false)
         end
         return false
     end
+
+    #detrmine endpoints (either with print intervals function or manually)
     if proof
+        #prints out intervals
         endpoints = print_Intervals(m,s,alpha)
     else
         if(V₋₁shares<Vshares)
@@ -57,14 +40,16 @@ function VMID(m,s,alpha,proof = false, ret_endpts =false)
             endpoints = [endpoints;[1//2 ybuddy]; [xbuddy (1-alpha)]]
         end
     end
-#    println(alpha,"  ", x,"  ", y,"  ", xbuddy,"  ", ybuddy," ", 1-alpha)
+    #Some variables we use later
+    #VV = V if the V shares are split, and V-1 if the V-1 shares are split
+    #I1, I2, and I3 are the amounts of shares in the first second and third intervals
+    # S = number of students in either V or V-1 (whichever is split)
     if(V₋₁shares<Vshares)
         S=sᵥ
         VV=V #which is split
         I1 = V₋₁shares
         I2 = Int64((Vshares - V₋₁shares)/2)
         I3 = I2
-
     else
         S=sᵥ₋₁
         shares=V₋₁shares
@@ -95,7 +80,7 @@ function VMID(m,s,alpha,proof = false, ret_endpts =false)
         end
     end
 
-    #if there are no possible distrubtions
+    #if there are no possible distrubtions return false
     if length(possInd)==0
         if proof
             println("No possible muffin distributions")
@@ -149,6 +134,9 @@ function VMID(m,s,alpha,proof = false, ret_endpts =false)
     #b = the size of each interval and S (number of students)
     b=[I1,I2,I3,S]
 
+
+    #set up a model and solve for the vector x
+    #x represents the the number of students who get each type of muffin piece distrib.
     model=Model(with_optimizer(Cbc.Optimizer, logLevel=0))
     @variable(model, x[i=1:length(possInd)],Int)
 
@@ -159,12 +147,12 @@ function VMID(m,s,alpha,proof = false, ret_endpts =false)
         display(A)
     end
     optimize!(model)
+
     if (termination_status(model) == MOI.OPTIMAL)
         if proof
             println()
             println(value.(x))
             println("There is a solution on the Naturals")
-        #println(value.(x))
             println("alpha > ",alpha)
             println()
         end
@@ -182,7 +170,7 @@ function VMID(m,s,alpha,proof = false, ret_endpts =false)
     end
     if proof
         println("No solution on the Naturals")
-        println("alpha ≤ ",alpha)
+        println("alpha ≤ ",numerator(alpha),"/",denominator(alpha))
     end
     if ret_endpts
         endpoints = collect(alpha*denom:1:(1-alpha)*denom)
@@ -207,7 +195,7 @@ function MID(m,s,min_al=1//2, ret_endpts = false)
     num=1
     denom=3
     while denom<=m*s
-        while alph<min_al
+        while alph<=min_al
             append!(array,alph)
             num=num+1
             alph = num//denom
@@ -227,7 +215,6 @@ function MID(m,s,min_al=1//2, ret_endpts = false)
         return 1,1
     end
     if ret_endpts
-        #endpoints=sort(collect(Iterators.flatten(endpoints)))
         endpoints = filter(x-> x!= 1//2, endpoints)
         return alpha, endpoints
     else
@@ -245,4 +232,27 @@ function PRINT(array)
         end
     end
     print(")")
+end
+#binary search using VMID
+function binarySearchMID(m,s,array)
+    return binSearchHelpMID(m,s,array,1,length(array))
+end
+function binSearchHelpMID(m,s,array,front,back)
+    if front>back
+        return 1
+    end
+    guessIndex =Int64(floor((front+back)/2))
+    if guessIndex == front
+        valid, endpoints = VMID(m,s,array[back],false, true)
+        if valid==true
+            return array[back], endpoints
+        else
+            return 1,1
+        end
+    end
+    if VMID(m,s,array[guessIndex],false) == true
+        return binSearchHelpMID(m,s,array,front,guessIndex)
+    else
+        return binSearchHelpMID(m,s,array,guessIndex, back)
+    end
 end

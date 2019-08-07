@@ -1,17 +1,17 @@
 include("helper_functions.jl")
-#VHALF verifies if f(m,s)≦ 𝛂 for some m,s and alpha
+#for information on this method see chapter 6 of "The Mathematics of Muffins"
+#VHALF verifies if f(m,s)≦ alpha for some m,s and alpha
 #using the half method (i.e. finds all the info and
 #checks to make sure there is a contradiction in "case 5")
-#from pg 70
-function VHALF(m,s,𝛂)
-  if 𝛂<1//3
+function VHALF(m,s,alpha)
+  if alpha<1//3
     return false
   end
-  if 𝛂 >1//2
+  if alpha >1//2
     return false
   end
   (V,sᵥ, sᵥ₋₁)=SV(m,s)
-  (x,y)=FINDEND(m,s,𝛂, V)
+  (x,y)=FINDEND(m,s,alpha, V)
 
   #check to see if there are too many pieces smaller than a half
   #or too many pieces larger than a half
@@ -24,7 +24,6 @@ function VHALF(m,s,𝛂)
 return false
 end
 
-#adapted from pg 71-72
 function HALF(m,s)
   if m%s == 0
     return 1
@@ -54,7 +53,7 @@ end
 #Half proof prints out a proof
 function Half_proof(m,s,alpha)
   if alpha >1//2
-    println("𝛂 > 1//2 is a bad guess, please rethink")
+    println("alpha > 1//2 is a bad guess, please rethink")
     exit(0)
   end
 
@@ -74,12 +73,12 @@ function Half_proof(m,s,alpha)
   share= m//(s *(V+1))
   println()
   println("Case 1: ")
-  println("if Alice has ",V+1, " or more shares then there exists a share ≦ ", share)
+  println("if Alice has ",V+1, " or more shares then there exists a share ≤ ", numerator(share),"/",denominator(share))
   #if the share that Alice has is less than our hypthoisized alpha than we know
   #Alice has less than five shares
   less_than_upper = share<alpha #boolean that is true if Alice has less than five shares
-  println("We will only consider the case where Alice has less than ", V+1," shares if share is <  𝛂")
-  println("share < 𝛂: ", less_than_upper)
+  println("We will only consider the case where Alice has less than ", V+1," shares if share is <  alpha")
+  println("share < alpha: ", less_than_upper)
   println()
   println("Case 2:")
   #if Bob has less than two shares then one of them has to be greater than
@@ -88,10 +87,10 @@ function Half_proof(m,s,alpha)
   buddy=(1-share)
 
   more_than_lower = buddy<alpha
-  print("if Bob has ", V-2," or less shares then there exists a share > ", share)
-  println(" whose buddy is < ", buddy)
-  println("We will only consider the case where Bob has more than ",V-2," shares if buddy < 𝛂")
-  println("buddy < 𝛂: ",more_than_lower)
+  print("if Bob has ", V-2," or less shares then there exists a share > ", numerator(share),"/",denominator(share))
+  println(" whose buddy is < ", numerator(buddy),"/",denominator(buddy))
+  println("We will only consider the case where Bob has more than ",V-2," shares if buddy < alpha")
+  println("buddy < alpha: ",more_than_lower)
   println()
   if(less_than_upper && more_than_lower)
 
@@ -101,21 +100,21 @@ function Half_proof(m,s,alpha)
     s3=s*V-pieces
     s4=pieces-s*V+s
     println("There are ", s3, " ",V-1,"-students, ", s4," ",V,"-students, ",(V-1)*s3, " ",V-1,"-shares, and ", V*s4, " ",V,"-shares.")
-    println("Endpoints are x = ",x," and y = ",y)
-    #Alice has a 4-share > x (x=m/s - 3𝛂)
+    println("Endpoints are x = ",numerator(x),"/",denominator(x)," and y = ",numerator(y),"/",denominator(y))
+    #Alice has a 4-share > x (x=m/s - 3alpha)
     println()
 
     println("Case 3:")
-    println("Alice has a ", V,"-share > ",x)
+    println("Alice has a ", V,"-share > ",numerator(x),"/",denominator(x))
     temp=(m-x*s)//s
-    println("Alice's other ", V-1," ",V, "-shares add up to < ", m//s, " - ", x," = ", temp)
-    print("so one of Alice's shares must be < ", temp, " * 1/",V-1," = ")
+    println("Alice's other ", V-1," ",V, "-shares add up to < ", m,"/",s, " - ", numerator(x),"/",denominator(x)," = ", numerator(temp),"/",denominator(temp))
+    print("so one of Alice's shares must be < ",numerator(temp),"/",denominator(temp), " * 1/",V-1," = ")
     temp=numerator(temp)//(denominator(temp)*(V-1))
-    println(temp)
+    println(numerator(temp),"/",denominator(temp))
     if(temp == alpha)
       println("so one of Alice's shares must be less than alpha")
     elseif(temp<alpha)
-      println(temp," < ",alpha,"  so one of Alice's shares must be less than alpha")
+      println(numerator(temp),"/",denominator(temp)," < ",numerator(alpha),"/",denominator(alpha),"  so one of Alice's shares must be less than alpha")
     end
 
     println()
@@ -123,15 +122,15 @@ function Half_proof(m,s,alpha)
     #Bob has a 3-share < y (y=m/s - 2*(1-alpha))
    temp=(m-y*s)//s
     println("Bob has a ", V-1,"-share < ",y)
-    println("Bob's other ",V-2," ",V-1,"-shares add up to > ",m//s, " - ", y, " = ", temp)
-    print("so one of Bob's shares must be > ",temp,"* 1/",V-2," =")
-    temp=numerator(temp)//(denominator(temp)*(V-2))
-    println(temp)
-    println("whose buddy would be < 1-",temp," = ", Rational(1-temp))
+    println("Bob's other ",V-2," ",V-1,"-shares add up to > ",m,"/",s, " - ", y, " = ", numerator(temp),"/",denominator(temp))
+    print("so one of Bob's shares must be > ",numerator(temp),"/",denominator(temp)," * 1/",V-2," =")
+    temp=temp//(V-2)
+    println(numerator(temp),"/",denominator(temp))
+    println("whose buddy would be < 1-",temp," = ",numerator(Rational(1-temp)),"/",denominator(Rational(1-temp)))
     if(1-temp == alpha)
       println("so one of Bob's shares must be less than alpha")
     elseif((1-temp)<alpha)
-      println(1-temp," < ",alpha,"  so one of Bob's shares must be less than alpha")
+      println(numerator(1-temp),"/",denominator(1-temp)," < ",numerator(alpha),"/",denominator(alpha),"  so one of Bob's shares must be less than alpha")
     end
 
     println()
@@ -148,6 +147,3 @@ function Half_proof(m,s,alpha)
     end
   end
 end
-
-#(Half_proof(11,5,13//30))
-#println(VHALF(45,26,32/78))

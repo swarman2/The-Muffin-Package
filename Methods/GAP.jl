@@ -2,7 +2,7 @@ include("helper_functions.jl")
 using JuMP
 using Cbc
 #if proof = 1 prints proof, if proof =2 prints proof with matrix
-function VGAPV3(m,s,alpha, proof=0, ret_endpts = false)
+function VGAP(m,s,alpha, proof=0, ret_endpts = false)
     V,sᵥ,sᵥ₋₁=SV(m,s)
     Vshares=V*sᵥ
     V₋₁shares=(V-1)*sᵥ₋₁
@@ -11,16 +11,13 @@ function VGAPV3(m,s,alpha, proof=0, ret_endpts = false)
     xbuddy=1-x
 
     denom=denominator(alpha)
-    denom=lcm(s,denom)*2
-    #if denom%2!=0
-    #    denom = 2*denom
-    #end
-    #println(denom)
+    denom=lcm(s,denom)
+
     if proof ==1 || proof ==2
         println()
-        println("PROOF OF f(",m,", ",s,") = ",alpha)
+        println("PROOF OF f(",m,", ",s,") = ",numerator(alpha),"/",denominator(alpha))
         println("There are ",V,"-students and ",V-1,"-students")
-        println("s",V,": ",sᵥ,"   s",V-1,": ",sᵥ₋₁)
+        println(sᵥ," ",V,"-students  ",sᵥ₋₁," ",V-1,"-students")
         println("All numbers assumed to have denominator ",denom)
     end
 
@@ -65,7 +62,7 @@ function VGAPV3(m,s,alpha, proof=0, ret_endpts = false)
     Endpoints = transpose(Endpoints)
     #######
     if proof ==1 || proof ==2
-        println("ENDPOINTS BEFORE BUDDY MATCH")
+        println("Intervals before Buddy-Match" )
         endpoints=convert_Int(endpoints)
         display(endpoints)
     end
@@ -88,68 +85,92 @@ function VGAPV3(m,s,alpha, proof=0, ret_endpts = false)
         end
         return false
     end
-    endpoints=[endpoints; denom//2 denom//2 ]
+    if ! (denom//2 in endpoints)
+        endpoints=[endpoints; denom//2 denom//2 ]
+        if proof >= 1
+            print("\nSPLIT AT 1/2 (",(denom/2),") ")
+        end
+    end
 
     endpoints=sort(collect(Iterators.flatten(endpoints)))
     endpoints=reshape(endpoints,(2,Int64(length(endpoints)/2)))
     endpoints = transpose(endpoints)
-if ret_endpts
-    Endpoints = endpoints
-    gap_found=true
-    while(gap_found == true)
-        #buddy match it
-        Endpoints = buddymatch(Endpoints,V,y,m,s,denom,0)
-        #Endpoints = buddymatch(Endpoints,V,y,m,s,denom,0)
-        row, col= size(Endpoints)
-        numIntervals = row
-        numVIntervals = 0
-        for i =1: row
-            if Endpoints[i,2]<=x*denom
-                numVIntervals = numVIntervals+1
+    # if we are returning endpoints we need to find them seperatly (so we don't include 1/2 or m/2s)
+    if ret_endpts
+        Endpoints = endpoints
+        gap_found=true
+        while(gap_found == true)
+            #buddy match it
+            Endpoints = buddymatch(Endpoints,V,y,m,s,denom,0)
+            #Endpoints = buddymatch(Endpoints,V,y,m,s,denom,0)
+            row, col= size(Endpoints)
+            numIntervals = row
+            numVIntervals = 0
+            for i =1: row
+                if Endpoints[i,2]<=x*denom
+                    numVIntervals = numVIntervals+1
+                end
             end
-        end
-        permV=perm(V, numVIntervals)
-        permV_ = perm(V-1, row - numVIntervals)
+            permV=perm(V, numVIntervals)
+            permV_ = perm(V-1, row - numVIntervals)
 
-        possV = Vector{Vector{Int64}}()
-        possV_ = Vector{Vector{Int64}}()
-        #Find the possible distribtions of muffins
-        for i=1:length(permV)
-            A=permV[i]
-            sum_1=0
-            sum_2=0
-            for j =1:numVIntervals
-                sum_1=sum_1+A[j]*Endpoints[j,1]
-                sum_2=sum_2+A[j]*Endpoints[j,2]
+            possV = Vector{Vector{Int64}}()
+            possV_ = Vector{Vector{Int64}}()
+            #Find the possible distribtions of muffins
+            for i=1:length(permV)
+                A=permV[i]
+                sum_1=0
+                sum_2=0
+                for j =1:numVIntervals
+                    sum_1=sum_1+A[j]*Endpoints[j,1]
+                    sum_2=sum_2+A[j]*Endpoints[j,2]
+                end
+                if (sum_1 <= (m//s)*denom) && (sum_2 >= (m//s)*denom)
+                    append!(possV, permV[i,:])
+                end
             end
-            if (sum_1 <= (m//s)*denom) && (sum_2 >= (m//s)*denom)
-                append!(possV, permV[i,:])
-            end
-        end
 
-        #Find the possible distribtions of muffins
-        for i=1:length(permV_)
-            A=permV_[i]
-            sum_1=0
-            sum_2=0
-            for j =numVIntervals+1:row
-                sum_1=sum_1+A[j-numVIntervals]*Endpoints[j,1]
-                sum_2=sum_2+A[j-numVIntervals]*Endpoints[j,2]
+            #Find the possible distribtions of muffins
+            for i=1:length(permV_)
+                A=permV_[i]
+                sum_1=0
+                sum_2=0
+                for j =numVIntervals+1:row
+                    sum_1=sum_1+A[j-numVIntervals]*Endpoints[j,1]
+                    sum_2=sum_2+A[j-numVIntervals]*Endpoints[j,2]
+                end
+                if (sum_1 <= (m//s)*denom) && (sum_2 >= (m//s)*denom)
+                    append!(possV_, permV_[i,:])
+                end
             end
-            if (sum_1 <= (m//s)*denom) && (sum_2 >= (m//s)*denom)
-                append!(possV_, permV_[i,:])
-            end
-        end
 
-        mat_V=transpose(hcat(possV...))
-        mat_V_=transpose(hcat(possV_...))
-        Endpoints, gap_found = findGaps(mat_V,mat_V_, Endpoints,m,s,denom,0, false)
-        #Endpoints, g = findGaps(mat_V, mat_V_, Endpoints,m,s,denom,0,false)
-    end #end finding gaps
-end
+            #look for more gaps using student distribtions
+            mat_V=transpose(hcat(possV...))
+            mat_V_=transpose(hcat(possV_...))
+            numVDistributions,numVIntervals=size(mat_V)
+            numV_Distributions, numV_Intervals=size(mat_V_)
+
+            gap_found1 = false
+            gap_found2 =false
+
+            Endpoints, gap_found1 = findGaps(mat_V,1,numVIntervals, Endpoints,m,s,denom,0)
+            if !gap_found1
+                Endpoints, gap_found2 = findGaps(mat_V_,numVIntervals+1,numVIntervals + numV_Intervals, Endpoints,m,s,denom,0)
+            end
+            if gap_found1||gap_found2
+                gap_found = true
+            else
+                gap_found=false
+            end
+            #Endpoints, g = findGaps(mat_V, mat_V_, Endpoints,m,s,denom,0,false)
+        end #end finding gaps
+    end
 
     if proof ==1 || proof ==2
-        println("\nSPLIT AT 1/2 (",Int64(denom/2),") and  m//2s (",Int64(denom*m//2s),")")
+        if V == 3
+            print("and m/2s (",(denom*m/(2s)),")")
+        end
+        println()
     end
     endpoints = buddymatch(endpoints,V,y,m,s,denom)
     row,col=size(endpoints)
@@ -190,7 +211,7 @@ end
 
             if buddyIn_1 == false && buddyIn_2 == false && denom-upper >= endpoints[1,1] && denom-lower <= endpoints[row,col]
                 if proof ==1 || proof ==2
-                    println("[",Int64(denom-upper),"  ",Int64(denom-lower),"] by buddying [",Int64(lower),"  ",Int64(upper),"]")
+                    println("[",float(denom-upper),"  ",float(denom-lower),"] by buddying [",float(lower),"  ",float(upper),"]")
                 end
                 endpoints=[endpoints; [(denom-upper) (denom-lower)];  [(denom-upper) (denom-lower)]]
                 i=1
@@ -228,12 +249,14 @@ end
         end
     end
 
-
+    # While iterate over the endpoints looking for more gaps until no more gaps found
     gap_found=true
     while(gap_found == true)
         #buddy match it
         endpoints = buddymatch(endpoints,V,y,m,s,denom,proof)
-        #Endpoints = buddymatch(Endpoints,V,y,m,s,denom,0)
+
+
+        #find out the distribtion of intervals (V or V-1)
         row, col= size(endpoints)
         numIntervals = row
         numVIntervals = 0
@@ -251,11 +274,19 @@ end
             endpoints = convert_Int(endpoints)
             println("\n",V," intervals")
             for j=1:numVIntervals
-                println("J_",j,": ",endpoints[j,:])
+                if endpoints[j,1]==endpoints[j,2]
+                    println("J_",j,": [",endpoints[j,1],", ",endpoints[j,2],"]")
+                else
+                    println("J_",j,": (",endpoints[j,1],", ",endpoints[j,2],")")
+                end
             end
             println("\n",V-1," intervals")
             for j=numVIntervals+1: row
-                println("I_",j-numVIntervals,": ",endpoints[j,:])
+                if endpoints[j,1]==endpoints[j,2]
+                    println("I_",j-numVIntervals,": [",endpoints[j,1],", ",endpoints[j,2],"]")
+                else
+                    println("I_",j-numVIntervals,": (",endpoints[j,1],", ",endpoints[j,2],")")
+                end
             end
         end
         #Find the possible distribtions of muffins
@@ -310,15 +341,30 @@ end
             end
                 println()
         end
-
+        #look for more gaps using student distribtions
         mat_V=transpose(hcat(possV...))
         mat_V_=transpose(hcat(possV_...))
-        endpoints, gap_found = findGaps(mat_V,mat_V_, endpoints,m,s,denom,proof)
-        #Endpoints, g = findGaps(mat_V, mat_V_, Endpoints,m,s,denom,0,false)
+        numVDistributions,numVIntervals=size(mat_V)
+        numV_Distributions, numV_Intervals=size(mat_V_)
+
+        gap_found1 = false
+        gap_found2 =false
+
+        endpoints, gap_found1 = findGaps(mat_V,1,numVIntervals, endpoints,m,s,denom,proof)
+        if !gap_found1
+            endpoints, gap_found2 = findGaps(mat_V_,numVIntervals+1,numVIntervals + numV_Intervals, endpoints,m,s,denom,proof)
+        end
+        if gap_found1||gap_found2
+            gap_found = true
+        else
+            gap_found=false
+        end
     end #end finding gaps
 
     if proof ==1 || proof ==2
         println("NO MORE GAPS")
+        println()
+
     end
     numIntervals = row
     numVIntervals = 0
@@ -377,6 +423,7 @@ end
     mat_V_=transpose(hcat(possV_...))
     symmIntervals = Array{Int64,2}(undef,0,0) # row [i j] if interval i is symm to interval j
     row_endpt,col_endpt = size(endpoints)
+    #intervals are symmetric if they are the same size and the same distance from either 1/2 or m/2s
     for i = 1:row_endpt
         for j=i+1:row_endpt
             if (endpoints[i,1]+endpoints[j,2])==denom && endpoints[i,2]-endpoints[i,1]==endpoints[j,2]-endpoints[j,1] || (endpoints[i,1]+endpoints[j,2])==(m*denom)//s && endpoints[i,2]-endpoints[i,1]==endpoints[j,2]-endpoints[j,1]
@@ -405,20 +452,19 @@ end
             println()
         end
     end
+    #test and make sure there is at least one possible distribtion
+    #for both the V and the V-1 shares
     if length(mat_V)==0
         if proof==1 || proof ==2
             println("\nNo possible distributions of ",V," shares: alpha ≤ ",alpha)
         end
         if ret_endpts
             B = collect(alpha*denom:1:(1-alpha)*denom)
-            #display(B)
-            #display(endpoints)
             row_e, col_e = size(endpoints)
             while row_e -1 > 0
                 B=filter(x-> x<=endpoints[row_e-1,2]|| x>=endpoints[row_e,1],B)
                 row_e = row_e-1
             end
-            #display(B)
             B= filter(x-> x!= 1//2, B)
             i=1
             while i<length(B)
@@ -446,12 +492,13 @@ end
                 row_e = row_e-1
             end
             #display(B)
-            B=filter(x-> x%2 == 0, B)
-            B=B//2
             return true, B
         end
         return true
     end
+
+    #make the two matricies the same size
+    #so we can form them into one system of eqns
     row_mat,col_mat = size(mat_V)
     row_mat_,col_mat_=size(mat_V_)
     row_mat_new=0
@@ -467,9 +514,6 @@ end
         row_mat_new,col_mat_ = size(mat_V_)
     end
     poss_Dist = [mat_V mat_V_]
-
-    #println("\nConcationate them in order to make one system of equations")
-    #display(poss_Dist)
 
     row_Dist, col_Dist = size(poss_Dist)
     row_endpt, col_endpt = size(endpoints)
@@ -529,6 +573,12 @@ end
     #Append a row of ones to A (num stud per distribtion adds to num VV students)
     Ones=(ones(Int64,col))'
 
+    #We know one last bit of info
+    #We know the amount of shares in the intervals symm about 1/2
+
+    #find the interverals that are symmetric around 1/2
+    #split_Intervals_1 are the intervals on the left of 1/2
+    #split_Intervals_2 are the intervals on the right of 1/2
     split_Intervals_1 = Array{Int64}(undef,0)
     split_Intervals_2 = Array{Int64}(undef,0)
     if VV==V
@@ -552,6 +602,7 @@ end
             end
         end
     end
+
     symm_sum_1 = Array{Int64}(undef,0)
     symm_sum_2 = Array{Int64}(undef,0)
     for i in split_Intervals_1
@@ -582,7 +633,7 @@ end
 
 
     if proof ==2
-        println("\nAdd a rows for the sums of the ",VV," shares symmetric around 1//2")
+        println("\nAdd a rows for the sums of the ",VV," shares symmetric around 1/2")
         display(A)
         println("Then solve the system for the number of each type of distribtuion (= ",b,")")
         display(A)
@@ -602,7 +653,7 @@ end
     if(termination_status(model)==MOI.OPTIMAL)
         if proof == 1 || proof ==2
             display(value.(X))
-            println("\nThere is a solution on the naturals, alpha > ",alpha)
+            println("\nThere is a solution on the naturals, alpha > ",numerator(alpha),"/",denominator(alpha))
         end
         if ret_endpts
             #denom = denom/2
@@ -613,30 +664,22 @@ end
                 B=filter(x-> x<=Endpoints[row_e-1,2]|| x>=Endpoints[row_e,1],B)
                 row_e = row_e-1
             end
-            B=filter(x-> x%2 == 0, B)
-            B=B//2
             #display(B)
             return false, B
         end
         return false
     else
         if proof ==1 || proof ==2
-            println("\nThere is no solution on the naturals, alpha ≤ ",alpha)
+            println("\nThere is no solution on the naturals, alpha ≤ ",numerator(alpha),"/",denominator(alpha))
         end
         if ret_endpts
             #denom = denom/2
             B = collect(alpha*denom:1:(1-alpha)*denom)
-
-
-
-
             row_e, col_e = size(Endpoints)
             while row_e -1 > 0
                 B=filter(x-> x<=Endpoints[row_e-1,2]|| x>=Endpoints[row_e,1],B)
                 row_e = row_e-1
             end
-            B=filter(x-> x%2 == 0, B)
-            B=B//2
             #display(B)
 
             return true, B
@@ -645,35 +688,42 @@ end
     end
 end
 
-function findGaps(possDistV,possDistV_,endpoints,m,s,denom,proof = 0, gap_extended=true)
+function findGaps(possDist,front,back,endpoints,m,s,denom,proof = 0, gap_extended=true)
     #find gaps
     _gap=false
-    numVDistributions,numVIntervals=size(possDistV)
-    numV_Distributions, numV_Intervals=size(possDistV_)
-
+#    println("NEW CALL")
+    numDistributions, numIntervals = size(possDist)
+    #we will use endpoints throughout and don't want it to change while working with it
     newendpoints=endpoints
-    for j=1:numVIntervals
+    for j=front:back#1:numVIntervals
+        #These arrays will hold the blocked off intervals
+        #ex. we will know that [lowEnd[i], highEnd[i]] is not empty
         lowEnd = Array{Rational}(undef,0)
         highEnd = Array{Rational}(undef,0)
-        for i=1:numVDistributions
-            if(possDistV[i,j]!=0)
+        for i=1:numDistributions
+            #println("i = ",i,"  j = ",j)
+            #display(possDist)
+            if(possDist[i,j-front+1]!=0)
                 #lower bound
                 sum=0
-                for k=1:length(possDistV[i,:])
+                #use idea described at bottom of pg 148 to
+                #find more gaps using student distributions
+
+                for k=front:back
                     if(k!=j)
-                        sum=sum+endpoints[k,2]*possDistV[i,k]
+                        sum=sum+endpoints[k,2]*possDist[i,k-front+1]
                     else
-                        sum=sum+endpoints[k,2]*(possDistV[i,k]-1)
+                        sum=sum+endpoints[k,2]*(possDist[i,k-front+1]-1)
                     end
                 end
                 lowerbound_temp=(m//s)*denom-sum
                 #upper bound
                 sum=0
-                for k=1:length(possDistV[i,:])
+                for k=front:back
                     if(k!=j)
-                        sum=sum+endpoints[k,1]*possDistV[i,k]
+                        sum=sum+endpoints[k,1]*possDist[i,k-front+1]
                     else
-                        sum=sum+endpoints[k,1]*(possDistV[i,k]-1)
+                        sum=sum+endpoints[k,1]*(possDist[i,k-front+1]-1)
                     end
                 end
                 upperbound_temp=(m//s)*denom-sum
@@ -687,8 +737,10 @@ function findGaps(possDistV,possDistV_,endpoints,m,s,denom,proof = 0, gap_extend
                 append!(highEnd,upperbound_temp)
             end #end if(X[i][j]!=0)
         end  #end  for i in possInd
+
+        #make temp endpts so we don't corrupt orignal data
         temp_endpt = Vector{Rational}(undef,0)
-        #only consider unique lower bounds
+
         lowEnd_temp = Array{Rational}(undef,0)
         for i=1:length(lowEnd)
             append!(lowEnd_temp,lowEnd[i])
@@ -698,6 +750,7 @@ function findGaps(possDistV,possDistV_,endpoints,m,s,denom,proof = 0, gap_extend
         for i=1:length(highEnd)
             append!(highEnd_temp,highEnd[i])
         end
+        #only consider unique lower bounds
         while unique(lowEnd_temp)!=lowEnd_temp
             for i =1:length(lowEnd_temp)
                 for j=i+1:length(lowEnd_temp)
@@ -714,7 +767,7 @@ function findGaps(possDistV,possDistV_,endpoints,m,s,denom,proof = 0, gap_extend
                 end
             end
         end
-
+        #now our data is of the form [lowEnd[1],highEnd[1],lowEnd[2],highEnd[2]...]
         while (length(lowEnd_temp)>0)
             lowIndex=1
             #println(lowEnd*230)
@@ -728,6 +781,8 @@ function findGaps(possDistV,possDistV_,endpoints,m,s,denom,proof = 0, gap_extend
             deleteat!(lowEnd_temp,lowIndex)
             deleteat!(highEnd_temp,lowIndex)
         end
+
+        #if we have overlaping intervals merge them
         merge=true
         while merge==true
             merge = false
@@ -745,18 +800,32 @@ function findGaps(possDistV,possDistV_,endpoints,m,s,denom,proof = 0, gap_extend
                 end
             end
         end
+
+        #make sure we only have data in the orignal interval
         endpt=filter(x-> x > endpoints[j,1],temp_endpt)
         endpt=filter(x-> x < endpoints[j,2],endpt)
-        int_lowEnd = Array{Int64}(undef,length(lowEnd))
+
+        #convert lowEnd and highEnd to int data
+        int_lowEnd = Array{Any}(undef,length(lowEnd))
         for i=1:length(lowEnd)
-            int_lowEnd[i] = Int64(lowEnd[i])
+            if lowEnd[i]-floor(lowEnd[i])!=0
+                int_lowEnd[i] = float(lowEnd[i])
+            else
+                int_lowEnd[i] = Int64(lowEnd[i])
+            end
         end
         lowEnd=int_lowEnd
-        int_highEnd = Array{Int64}(undef,length(highEnd))
+        int_highEnd = Array{Any}(undef,length(highEnd))
         for i=1:length(highEnd)
-            int_highEnd[i] = Int64(highEnd[i])
+            if highEnd[i]-floor(highEnd[i])!=0
+                int_highEnd[i] = float(highEnd[i])
+            else
+                int_highEnd[i] = Int64(highEnd[i])
+            end
         end
         highEnd=int_highEnd
+
+        #print out the gaps found
         if length(endpt)%2==0
             for i=1:Int64(length(endpt)/2)
                 upperbound=Int64(endpt[i])
@@ -765,11 +834,12 @@ function findGaps(possDistV,possDistV_,endpoints,m,s,denom,proof = 0, gap_extend
                     if proof ==1 || proof ==2
                         println("NEW GAP FOUND: [",upperbound,",",lowerbound,"]")
                         k=1
-                        for i=1:numVDistributions
-                            if(possDistV[i,j]!=0)
+                        for i=1:numDistributions
+
+                            if(possDist[i,j-front+1]!=0)
                             #    println(possDistV[i,:])
                                 print(lowEnd[k]," ≤ ")
-                                PRINT(possDistV[i,:])
+                                PRINT(possDist[i,:])
                                 println(" ≤ ",highEnd[k])
                                 k=k+1
                             end
@@ -792,10 +862,10 @@ function findGaps(possDistV,possDistV_,endpoints,m,s,denom,proof = 0, gap_extend
                 newendpoints[j,2]=temp_endpt[2]
                 if proof
                     k=1
-                    for i=1:numVDistributions
-                        if(possDistV[i,j]!=0)
+                    for i=1:numDistributions
+                        if(possDist[i,j-front+1]!=0)
                             print(lowEnd[k]," ≤ ")
-                            PRINT(possDistV[i,:])
+                            PRINT(possDist[i,:])
                             println(" ≤ ",highEnd[k])
                             k=k+1
                         end
@@ -809,10 +879,10 @@ function findGaps(possDistV,possDistV_,endpoints,m,s,denom,proof = 0, gap_extend
                 newendpoints[j,1]=temp_endpt[1]
                 if proof == 1 || proof ==2
                     k=1
-                    for i=1:numVDistributions
-                        if(possDistV[i,j]!=0)
+                    for i=1:numDistributions
+                        if(possDist[i,j]!=0)
                             print(lowEnd[k]," ≤ ")
-                            PRINT(possDistV[i,:])
+                            PRINT(possDist[i,:])
                             println(" ≤ ",highEnd[k])
                             k=k+1
                         end
@@ -824,175 +894,9 @@ function findGaps(possDistV,possDistV_,endpoints,m,s,denom,proof = 0, gap_extend
     end #end for j=1:numInterval
 
    #move on to the V-1 Intervals
-    for j=numVIntervals+1:numVIntervals + numV_Intervals
-        lowEnd = Array{Rational}(undef,0)
-        highEnd = Array{Rational}(undef,0)
-        for i=1:numV_Distributions
-            if(possDistV_[i,j-numVIntervals]!=0)
-                #lower bound
-                sum=0
-                for k=numVIntervals+1:numVIntervals+length(possDistV_[i,:])
-                    if(k!=j)
-                        sum=sum+endpoints[k,2]*possDistV_[i,k-numVIntervals]
-                    else
-                        sum=sum+endpoints[k,2]*(possDistV_[i,k-numVIntervals]-1)
-                    end
-                end
-                lowerbound_temp=(m//s)*denom-sum
-                #upper bound
-                sum=0
-                for k=numVIntervals+1:numVIntervals+length(possDistV_[i,:])
-                    if(k!=j)
-                        sum=sum+endpoints[k,1]*possDistV_[i,k-numVIntervals]
-                    else
-                        sum=sum+endpoints[k,1]*(possDistV_[i,k-numVIntervals]-1)
-                    end
+   #it's the same
+return newendpoints, _gap
 
-                end
-                upperbound_temp=(m//s)*denom-sum
-                if lowerbound_temp<endpoints[j,1]
-                    lowerbound_temp=endpoints[j,1]
-                end
-                if upperbound_temp>endpoints[j,2]
-                    upperbound_temp=endpoints[j,2]
-                end
-                append!(lowEnd,lowerbound_temp)
-                append!(highEnd,upperbound_temp)
-            end #end if(X[i][j]!=0)
-        end  #end  for i in possInd
-        lowEnd_temp = Array{Rational}(undef,0)
-        for i=1:length(lowEnd)
-            append!(lowEnd_temp,lowEnd[i])
-        end
-        #println(lowEnd)
-        highEnd_temp = Array{Rational}(undef,0)
-        for i=1:length(highEnd)
-            append!(highEnd_temp,highEnd[i])
-        end
-        while unique(lowEnd_temp)!=lowEnd_temp
-            for i =1:length(lowEnd_temp)
-                for j=i+1:length(lowEnd_temp)
-                    if lowEnd_temp[i]==lowEnd_temp[j]
-                        if highEnd_temp[i]>=highEnd_temp[j]
-                            deleteat!(lowEnd_temp,j)
-                            deleteat!(highEnd_temp,j)
-                        else
-                            deleteat!(lowEnd_temp,i)
-                            deleteat!(highEnd_temp,i)
-                        end
-                        break
-                    end
-                end
-            end
-        end
-        temp_endpt=Array{Rational}(undef,0)
-        while (length(lowEnd_temp)>0)
-            lowIndex=1
-            for i = 1:length(lowEnd_temp)
-                if lowEnd_temp[i]<lowEnd_temp[lowIndex]
-                    lowIndex=i
-                end
-            end
-            push!(temp_endpt,lowEnd_temp[lowIndex])
-            push!(temp_endpt,highEnd_temp[lowIndex])
-            deleteat!(lowEnd_temp,lowIndex)
-            deleteat!(highEnd_temp,lowIndex)
-        end
-        merge=true
-        while merge==true
-            merge = false
-            for i=1:Int64(length(temp_endpt)/2-1)
-                if temp_endpt[2*i] >= temp_endpt[2*i+1]
-                    merge = true
-                    if (temp_endpt[2*i]<temp_endpt[2*(i+1)])
-                        deleteat!(temp_endpt,2i+1)
-                        deleteat!(temp_endpt,2i)
-                    else
-                        deleteat!(temp_endpt,2(i+1))
-                        deleteat!(temp_endpt,2i+1)
-                    end
-                    break
-                end
-            end
-        end
-        endpt=filter(x-> x > endpoints[j,1],temp_endpt)
-        endpt=filter(x-> x < endpoints[j,2],endpt)
-        int_lowEnd = Array{Int64}(undef,length(lowEnd))
-        for i=1:length(lowEnd)
-            int_lowEnd[i] = Int64(lowEnd[i])
-        end
-        lowEnd=int_lowEnd
-        int_highEnd = Array{Int64}(undef,length(highEnd))
-        for i=1:length(highEnd)
-            int_highEnd[i] = Int64(highEnd[i])
-        end
-        highEnd=int_highEnd
-        #println("-----------------------",endpt*246)
-        if length(endpt)%2==0
-            for i=1:Int64(length(endpt)/2)
-                upperbound=Int64(endpt[i])
-                lowerbound=Int64(endpt[2i])
-                if lowerbound>upperbound
-                    if proof ==1 || proof ==2
-                        println("NEW GAP FOUND: [",upperbound,",",lowerbound,"]")
-                        k=1
-                        for i=1:numV_Distributions
-                            if(possDistV_[i,j-numVIntervals]!=0)
-                                print(lowEnd[k]," ≤ ")
-                                PRINT(possDistV_[i,:])
-                                println(" ≤ ",highEnd[k])
-                                k=k+1
-                            end
-                        end
-                    end
-                    _gap=true
-                    newendpoints=[newendpoints; upperbound lowerbound]#; (1-lowerbound) (1-upperbound)]
-                    newendpoints=sort(collect(Iterators.flatten(newendpoints)))
-                    newendpoints=reshape(newendpoints,(2,Int64(length(newendpoints)/2)))
-                    newendpoints = transpose(newendpoints)
-                end #end if(lowerbound>upperbound)
-            end#end for i = 1:Int64(length(temp_endpt)/2)
-        elseif length(endpt)==1 && gap_extended
-            if temp_endpt[1]<endpoints[j,1] #then change upper bound
-                _gap=true
-                if proof ==1 || proof ==2
-                    println("GAP EXTENDED: ",newendpoints[j,2]," changed to ",temp_endpt[2])
-                end
-                endpoints[j,2]=temp_endpt[2]
-                k=1
-                if proof
-                    for i=1:numV_Distributions
-                        if(possDistV_[i,j-numVIntervals]!=0)
-                            print(lowEnd[k]," ≤ ")
-                            PRINT(possDistV_[i,:])
-                            println(" ≤ ",highEnd[k])
-                            k=k+1
-                        end
-                    end
-                end
-            elseif temp_endpt[1]>endpoints[j,1] && gap_extended
-                _gap=true
-                if proof==1 || proof ==2
-                    println("GAP EXTENDED: ",newendpoints[j,1]," changed to ",temp_endpt[1])
-                end
-                endpoints[j,1]=temp_endpt[1]
-                k=1
-                if proof >=1
-                    for i=1:numV_Distributions
-                        if(possDistV_[i,j-numVIntervals]!=0)
-                            print(lowEnd[k]," ≤ ")
-                            PRINT(possDistV_[i,:])
-                            println(" ≤ ",highEnd[k])
-                            k=k+1
-                        end
-                    end
-                end
-            end
-
-
-        end
-    end #end for j=1:numInterval
-    return newendpoints, _gap
 end
 
 function buddymatch(endpoints, V,y,m,s,denom,proof = 0)
@@ -1058,34 +962,10 @@ function buddymatch(endpoints, V,y,m,s,denom,proof = 0)
     end
     return endpoints
 end
-function Display(array)
-    largest_denom = 0
-    row,col=size(array)
-    for i = 1:row
-        for j=1:col
-            if denominator(array[i,j])>largest_denom
-                largest_denom = Int64(denominator(array[i,j]))
-            end
-        end
-    end
-    for i = 1:row
-        for j=1:col
-            if gcd(denominator(array[i,j]),Int64(largest_denom))!=denominator(array[i,j])
-                largest_denom = largest_denom*(denominator(array[i,j])/(gcd(denominator(array[i,j]),Int64(largest_denom))))
-            end
-        end
-    end
-    matrix=Array{Any}(undef,0)
-        for j=1:col
-            for i=1:row
-            num=numerator(array[i,j])*(largest_denom/denominator(array[i,j]))
-            str = string(string(Int64(num))*"/"*string(Int64(largest_denom)))
-            append!(matrix,[str])
-        end
-    end
-    matrix = reshape(matrix, Int64(length(matrix)/col),col)
-    display(matrix)
-end
+
+#PRINT prints an array in "converted" form
+#ex: array = [2 0 0 1] (lets say that means use 2 I_1 shares and 1 I_4 shares)
+# this function would print (1 1 4)
 function PRINT(array)
     print("( ")
     for i=1:length(array)
@@ -1095,17 +975,22 @@ function PRINT(array)
     end
     print(")")
 end
-function convert_Int(matrix::Matrix{Rational})
+
+#This just converts from rational to int (or float)
+function convert_Int(matrix)
     row,col=size(matrix)
-    mat = Matrix{Int64}(undef, row,col)
+    mat = Matrix{Any}(undef, row,col)
     for i=1:row
         for j=1:col
-            mat[i,j]=Int64(matrix[i,j])
+            if matrix[i,j]-floor(matrix[i,j])!=0
+                mat[i,j]=float(matrix[i,j])
+            else
+                mat[i,j]=Int64(matrix[i,j])
+            end
         end
     end
     return mat
 end
-
 
 
 function GAP(m,s,min_al = 1//2, ret_endpts = false)
@@ -1117,7 +1002,7 @@ function GAP(m,s,min_al = 1//2, ret_endpts = false)
     num=1
     denom=3
     while denom<=m*s
-        while alph<min_al
+        while alph<=min_al
             append!(array,alph)
             num=num+1
             alph = num//denom
@@ -1166,7 +1051,7 @@ function binSearchHelpGAP(m,s,array,front,back)
     guessIndex =Int64(floor((front+back)/2))
     #println("front: ",front,"  back: ",back,"  alpha: ",array[guessIndex])
     if guessIndex == front
-        valid, endpoints =VGAPV3(m,s,array[back], 0, true)
+        valid, endpoints =VGAP(m,s,array[back], 0, true)
         if valid==true
             return array[back], endpoints
         else
@@ -1174,7 +1059,7 @@ function binSearchHelpGAP(m,s,array,front,back)
         end
     end
 
-    if VGAPV3(m,s,array[guessIndex]) == true
+    if VGAP(m,s,array[guessIndex]) == true
         return binSearchHelpGAP(m,s,array,front,guessIndex)
     else
         return binSearchHelpGAP(m,s,array,guessIndex, back)
@@ -1185,3 +1070,7 @@ function pGap(m,s,alpha)
     x=GAP(m,s)
     println("f(",m,",",s,")    ",x==alpha,"   ",x)
 end
+#VGAP(54,47,16//47,1)
+#VGAP(31,19,54//133,1)
+#VGAP(778,61,20408//41663,1)
+#GAP(778,61)

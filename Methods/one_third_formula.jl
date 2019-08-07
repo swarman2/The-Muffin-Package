@@ -4,7 +4,7 @@ using GLPK
 
 function one_thrd(m,s, proof = 0)
     if proof >=1
-        println("f(",m,", ",s,") ≥ 1//3 proof")
+        println("f(",m,", ",s,") ≥ 1/3 proof")
     end
     if m%s == 0
         if proof >=1
@@ -13,7 +13,7 @@ function one_thrd(m,s, proof = 0)
       return 1
     end
     fixed_muffin = Int64(m - s)
-    if proof >=1
+    if proof >=2
         println("Divide ",fixed_muffin," muffins into (1/3, 1/3, 1/3)\n")
     end
 
@@ -59,21 +59,29 @@ function one_thrd(m,s, proof = 0)
     type2stud=Vector{Vector{Rational}}(undef,0)
 
     for i = 1:1:value.(x)[1]
-        if proof >=1
-            println("Give student ",Int64(i)," -> (",student_share_1,"")
+        if proof >=2
+            print("Give student ",Int64(i)," -> (  ")
+            for l = 1:length(student_share_1)
+                print(numerator(student_share_1[l]),"/",denominator(student_share_1[l]),"  ")
+            end
+            println(")")
         end
         push!(type1stud,student_share_1)
     end
 
     for j = 1:1:value.(x)[2]
-        if proof >=1
-            println("Give student ",Int64((value.(x)[1]+j))," -> (",student_share_2,"")
+        if proof >=2
+            print("Give student ",Int64((value.(x)[1]+j))," -> (  ")
+            for l = 1:length(student_share_2)
+                print(numerator(student_share_2[l]),"/",denominator(student_share_2[l]),"  ")
+            end
+            println(")")
         end
         push!(type2stud,student_share_2)
     end
 
     new_muffin = new_muffin - 1
-    if proof >=1
+    if proof >=2
         println("\nCut 1 muffin -> (1/2, 1/2)\n")
     end
 
@@ -89,12 +97,12 @@ function one_thrd(m,s, proof = 0)
     half_to_W = false
 
     if x1_half_dis < x2_half_dis
-        if proof >=1
+        if proof >=2
             println("Give a ",Int64((floor_pieces+2)),"-student the piece of size (1/2)")
         end
    elseif x1_half_dis > x2_half_dis   ## true for 11/5
         half_to_W = true
-        if proof >=1
+        if proof >=2
             println("Give a ",Int64((ceil_pieces+2)),"-student the piece of size (1/2)")
         end
     end
@@ -124,13 +132,21 @@ function one_thrd(m,s, proof = 0)
           println("???")
        end
     end
-    if proof >=1
+    if proof >=2
         for i = 1:length(type1stud)
-            println("Give student ",Int64(i)," -> (",type1stud[i],"")
+            print("Give student ",Int64(i)," -> (  ")
+            for l = 1:length(type1stud[i])
+                print(numerator(type1stud[i][l]),"/",denominator(type1stud[i][l]),"  ")
+            end
+            println(")")
         end
 
         for j = 1:length(type2stud)
-            println("Give student ",Int64((j+length(type1stud)))," -> (",type2stud[j],"")
+            print("Give student ",Int64((j+length(type1stud)))," -> (  ")
+            for l = 1:length(type2stud[j])
+                print(numerator(type2stud[j][l]),"/",denominator(type2stud[j][l]),"  ")
+            end
+            println(")")
         end
     end
     full = false
@@ -203,22 +219,32 @@ function one_thrd(m,s, proof = 0)
             end
         end
         muffin_count = muffin_count -2
-        if proof >=1
+        if proof >=2
             if muffin_count >0
-                println("\nCut 2 muffins -> (",new_piece,", ", 1-new_piece,")\n")
+                println("\nCut 2 muffins -> (",numerator(new_piece),"/",denominator(new_piece),", ", numerator(1-new_piece),"/",denominator(1-new_piece),")\n")
             else
-                println("\nCut 1 muffin -> (",new_piece,", ", 1-new_piece,")\n")
+                println("\nCut 1 muffin -> (",numerator(new_piece),"/",denominator(new_piece),", ", numerator(1-new_piece),"/",denominator(1-new_piece),")\n")
             end
         end
 
-        if proof >=1
+        if proof >=2
             for i = 1:length(type1stud)
-                println("Give student ",Int64(i)," -> (",type1stud[i],"")
+                print("Give student ",Int64(i)," -> (  ")
+                for l = 1:length(type1stud[i])
+                    print(numerator(type1stud[i][l]),"/",denominator(type1stud[i][l]),"  ")
+                end
+                println(")")
             end
 
+
             for j = 1:length(type2stud)
-                println("Give student ",Int64((j+length(type1stud)))," -> (",type2stud[j],"")
+                print("Give student ",Int64((j+length(type1stud)))," -> (  ")
+                for l = 1:length(type2stud[j])
+                    print(numerator(type2stud[j][l]),"/",denominator(type2stud[j][l]),"  ")
+                end
+                println(")")
             end
+
             println()
         end
         full = true
@@ -234,7 +260,56 @@ function one_thrd(m,s, proof = 0)
         end
     end
     valid = true
-
+    if proof ==1
+        distrib = Array{Any}(undef,0)
+        while  length(type1stud)>0
+            k = type1stud[1]
+            num = 0
+            for i = 1:length(type1stud)
+                if type1stud[i] == k
+                    num = num+1
+                end
+            end
+        #    num = count(i -> type1stud[i] == k)
+            append!(distrib, num)
+            append!(distrib,[k])
+            type1stud = filter(i -> i!= k, type1stud)
+        end
+        i=1
+        while i < length(distrib)
+            print("Give ", distrib[i]," student(s)  -> (  ")
+            for l = 1:length(distrib[i+1])
+                print(numerator(distrib[i+1][l]),"/",denominator(distrib[i+1][l]),"  ")
+            end
+            println(")")
+            i = i+2
+        end
+        println()
+        distrib = Array{Any}(undef,0)
+        while  length(type2stud)>0
+            k = type2stud[1]
+            num = 0
+            for i = 1:length(type2stud)
+                if type2stud[i] == k
+                    num = num+1
+                end
+            end
+        #    num = count(i -> type1stud[i] == k)
+            append!(distrib, num)
+            append!(distrib,[k])
+            type2stud = filter(i -> i!= k, type2stud)
+        end
+        i=1
+        while i < length(distrib)
+            print("Give ", distrib[i]," student(s)  -> (  ")
+            for l = 1:length(distrib[i+1])
+                print(numerator(distrib[i+1][l]),"/",denominator(distrib[i+1][l]),"  ")
+            end
+            println(")")
+            i = i+2
+        end
+        println()
+    end
     for i=1:length(type1stud)
         if sum(type1stud[i]) != m//s
             valid = false

@@ -19,6 +19,10 @@ function VINT(m,s,alpha, proof = false)
    smallShare[i]=-1
  end
 
+ if proof
+   print_Intervals(m,s,alpha,false)
+ end
+
   if(V₋₁shares<Vshares)
 
    #___(_______)________(_____)___|___(_____)____
@@ -27,15 +31,6 @@ function VINT(m,s,alpha, proof = false)
 
    num_small_shares = V₋₁shares
    num_large_shares = Vshares - V₋₁shares
-   if proof
-     println("m  = ",m,"  s = ", s)
-     println( sᵥ," ",V,"-students \t",sᵥ₋₁," ",V-1,"-students \t",sᵥ*V," ",V,"-shares \t",sᵥ₋₁*(V-1)," ",V-1,"-shares")
-     println()
-     println("SPLIT THE ",V," SHARES")
-     println("   ( ",num_small_shares," small ",V,"-shares)   (",num_large_shares," large ",V,"-shares)   |   ( ",V₋₁shares,"  ",V-1,"-shares )    ")
-     println("  ",alpha,"     ", ybuddy,"  ", xbuddy,"          ",x," | ", y,"              ",1-alpha)
-     println()
-   end
 
    j=1
    smallShare[1]=0
@@ -48,6 +43,9 @@ function VINT(m,s,alpha, proof = false)
    end
    minSm=Inf
    minLg=Inf
+   if proof
+      println("Possible distribution of shares: ")
+    end
    for i=1:V+1
      if(smallShare[i]!=-1)
        if(smallShare[i]<minSm)
@@ -57,7 +55,7 @@ function VINT(m,s,alpha, proof = false)
          minLg = V-smallShare[i]
        end
        if proof
-         println(smallShare[i]," small share(s) and ",V-smallShare[i]," large share(s)")
+         println("    ",smallShare[i]," small share(s) and ",V-smallShare[i]," large share(s)")
        end
      end
    end
@@ -69,10 +67,10 @@ function VINT(m,s,alpha, proof = false)
          println("Need at least ",minLg, " large shares")
        end
        if(minSm*sᵥ>num_small_shares)
-         println(sᵥ," students need at least ", minSm, " small shares, but there are only ", num_small_shares, " small shares, so 𝛂 ≦ ", alpha)
+         println(sᵥ," students need at least ", minSm, " small shares, but there are only ", num_small_shares, " small shares, so alpha ≤ ", numerator(alpha),"/",denominator(alpha))
        end
        if(minLg*sᵥ>num_large_shares)
-         println(sᵥ," students need at least ", minLg, " large shares, but there are only ", num_large_shares, " large shares, so 𝛂 ≦ ", alpha)
+         println(sᵥ," students need at least ", minLg, " large shares, but there are only ", num_large_shares, " large shares, so alpha ≤ ", numerator(alpha),"/",denominator(alpha))
        end
      end
      if(minSm*sᵥ>num_small_shares)
@@ -89,13 +87,6 @@ function VINT(m,s,alpha, proof = false)
 
    num_large_shares = Vshares
    num_small_shares = V₋₁shares - Vshares
-   if proof
-     println()
-     println("SPLIT THE ",V-1," SHARES")
-     println("   ( ",Vshares," ",V,"-shares) |  (",num_small_shares," small ",V-1,"-shares)      ( ",num_large_shares," large ",V-1,"-shares )    ")
-     println("  ",alpha,"     ", x," | ", y,"          ",ybuddy,"  ", xbuddy,"              ",1-alpha)
-     println()
-   end
 
    j=1
    smallShare[1]=0
@@ -129,10 +120,10 @@ function VINT(m,s,alpha, proof = false)
        println("Need at least ",minLg, " large shares")
      end
      if(minSm*sᵥ₋₁>num_small_shares)
-       println(sᵥ₋₁," students need at least ", minSm, " small shares, but there are only ", num_small_shares, " small shares, so 𝛂 cant be ≥ ", alpha)
+       println(sᵥ₋₁," students need at least ", minSm, " small shares, but there are only ", num_small_shares, " small shares, so alpha ≤ ", numerator(alpha),"/",denominator(alpha))
      end
      if(minLg*sᵥ₋₁>num_large_shares)
-      println(sᵥ₋₁," students need at least ", minLg, " large shares, but there are only ", num_large_shares, " large shares, so 𝛂 cant be ≥ ", alpha)
+      println(sᵥ₋₁," students need at least ", minLg, " large shares, but there are only ", num_large_shares, " large shares, so alpha ≤ ", numerator(alpha),"/",denominator(alpha))
      end
    end
    if(minSm*sᵥ₋₁>num_small_shares)

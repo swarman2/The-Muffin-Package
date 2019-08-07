@@ -1,4 +1,8 @@
+#for information on this method see chapter 10 of "The Mathematics of Muffins"
+
 function EBM(m::Int64,s::Int64, proof = false)
+    #Before each if is a number this number corresponds to the
+    # algorithim under the book heading "The Function EBM" (chapter 10) 
     #1
     if m%s == 0
       return 1
@@ -21,48 +25,30 @@ function EBM(m::Int64,s::Int64, proof = false)
     #3
     if 2d + 1 <= a && a <= 3d
         if proof
-        println("2 * ",d," + 1 ≤ ",a," and ", a," ≤ 3 * ",d)
-        println("α ≤ 1/3")
-    end
+            println("2 * ",d," + 1 ≤ ",a," and ", a," ≤ 3 * ",d)
+            println("α ≤ 1/3")
+        end
         return 1//3
     end
 
     #4
     if a == 2d
         if proof
-        println(a," = 2 * ",d)
-        println("α ≤ ",a,"/2")
-    end
+            println(a," = 2 * ",d)
+            println("α ≤ ",a,"/2")
+        end
         return a//2
     end
 
     #5
     if 1 <= a <= 2d - 1
-
         X=minimum([a//2 (a+d)//4])
         if proof
-        println("1 ≤ ",a," ≤ 2 * ",d," - 1")
-        println("X = min(",a,"/2, ",a+d,"/4)")
-        println("X = ",X)
-        println("α ≤ ","(",d," * ",k," + ",X,")/(3 * ",d," * ",k," + ",a,") = ",(d*k +X)//(3d*k+a))
+            println("1 ≤ ",a," ≤ 2 * ",d," - 1")
+            println("X = min(",a,"/2, ",a+d,"/4)")
+            println("X = ",X)
+            println("α ≤ ","(",d," * ",k," + ",X,")/(3 * ",d," * ",k," + ",a,") = ",(d*k +X)//(3d*k+a))
+        end
+    return (d*k +X)//(3d*k+a)
     end
-        return (d*k +X)//(3d*k+a)
 end
-end
-
-#Pebm(29,27)
-#Pebm(33,31)
-#Pebm(35,33)
-#Pebm(37,34)
-#Pebm(39,37)
-#Pebm(41,39)
-#Pebm(44,41)
-#Pebm(45,43)
-#Pebm(46,43)
-#Pebm(47,45)
-#Pebm(49,45)
-#Pebm(49,46)
-#Pebm(50,47)
-#Pebm(51,49)
-#Pebm(53,50)
-#Pebm(13,12)

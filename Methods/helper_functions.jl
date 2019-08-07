@@ -1,4 +1,4 @@
-
+using Printf
 #mulitsets of B that sum to T of size k
 function Multiset(B,T,k, time_limit=Inf)
     A=Dict{String,Vector{Vector{Int64}}}()
@@ -94,7 +94,8 @@ function Multiset_helper(B,A,i::Int64,T::Int64,k::Int64, ogTime,time_limit)
     end
 end
 
-function print_Intervals(m,s,alpha)
+#This function prints a terminal graphic of the way the shares are split up
+function print_Intervals(m,s,alpha,split = true)
     V,sᵥ,sᵥ₋₁=SV(m,s)
     Vshares=V*sᵥ
     V₋₁shares=(V-1)*sᵥ₋₁
@@ -103,23 +104,30 @@ function print_Intervals(m,s,alpha)
 
     xbuddy = 1-x
     ybuddy = 1-y
-
+    denom=denominator(alpha)
+    denom=lcm(s,denom)
+    println()
+    println("m  = ",m,"  s = ", s)
+    println( sᵥ," ",V,"-students \t",sᵥ₋₁," ",V-1,"-students \t",sᵥ*V," ",V,"-shares \t",sᵥ₋₁*(V-1)," ",V-1,"-shares")
+    println("Numbers assumed to have denominator: ",denom)
+    println()
     if(V₋₁shares<Vshares)
          #___(_______)________(_____)___|___(_____)____
          #alpha   y-buddy   xbuddy   x  |   y    1-alpha
          #smallShare is an array that holds the possiblities for number of small shares
          num_small_shares = V₋₁shares
         num_large_shares = Vshares - V₋₁shares
-        println("m  = ",m,"  s = ", s)
-        println( sᵥ," ",V,"-students \t",sᵥ₋₁," ",V-1,"-students \t",sᵥ*V," ",V,"-shares \t",sᵥ₋₁*(V-1)," ",V-1,"-shares")
-        println()
         println("SPLIT THE ",V," SHARES")
-        println("   ( ",num_small_shares," small ",V,"-shares)   (",num_large_shares," large ",V,"-shares)   |   ( ",V₋₁shares,"  ",V-1,"-shares )    ")
-        println("  ",alpha,"     ", ybuddy,"  ", xbuddy,"          ",x," | ", y,"              ",1-alpha)
+        @printf("\n     (  %-3d small %2d-shares )         (  %-3d large %2d-shares  )    |    (    %-3d %2d-shares   )",num_small_shares, V, num_large_shares, V, V₋₁shares, V-1)
+        @printf("\n    %-22d %-8d  %-22d  %-7d   %-19d  %-9d",alpha*denom,ybuddy*denom,xbuddy*denom,x*denom,y*denom,(1-alpha)*denom)
+
         println()
-        println("SPLIT THE ",V," SHARES AGAIN")
-        println("   ( ",num_small_shares," " ,V,"-shares)           (",Int64(num_large_shares/2)," large ",V,"-shares |  ",Int64(num_large_shares/2)," large ",V,"-shares)    ")
-        println("  ",alpha,"     ", ybuddy,"     ", xbuddy,"          1/2      ",x)
+        if split
+            println("\n\nSPLIT THE ",V," SHARES AGAIN")
+            @printf("\n     (  %-3d small %2d-shares  )         (  %-3d %2d-shares    |    %-3d %2d-shares  ) ",num_small_shares, V,Int64(num_large_shares/2), V, Int64(num_large_shares/2), V)
+            @printf("\n    %-22d  %-9d %-19d %-19d %-5d",alpha*denom,ybuddy*denom,xbuddy*denom,denom/2,x*denom)
+        end
+        println()
         println()
         S=sᵥ
         shares=Vshares
@@ -132,16 +140,24 @@ function print_Intervals(m,s,alpha)
     else
         num_small_shares = V₋₁shares-Vshares
         num_large_shares =   Vshares
-        println("m  = ",m,"  s = ", s)
-        println( sᵥ," ",V,"-students \t",sᵥ₋₁," ",V-1,"-students \t",sᵥ*V," ",V,"-shares \t",sᵥ₋₁*(V-1)," ",V-1,"-shares")
-        println()
+
+        #alpha = 145//denom
         println("SPLIT THE ",V-1," SHARES")
-        println("   ( ",Vshares," ",V,"-shares)  | (",num_small_shares," small ",V-1,"-shares)      ( ",num_large_shares," large ",V-1,"-shares )    ")
-        println("  ",alpha,"     ", x," | ", y,"          ",ybuddy,"  ", xbuddy,"              ",1-alpha)
+        @printf("\n     (    %-3d %2d-shares   )    |    (  %-3d small %2d-shares )         (  %-3d large %2d-shares  )  ",Vshares, V,num_small_shares, V-1, num_large_shares, V-1)
+        @printf("\n    %-20d %-9d %-21d  %-8d  %-23d %-5d",alpha*denom,x*denom,y*denom,ybuddy*denom,xbuddy*denom,(1-alpha)*denom)
+
+    #    println("   ( ",Vshares," ",V,"-shares)  | (",num_small_shares," small ",V-1,"-shares)      ( ",num_large_shares," large ",V-1,"-shares )    ")
+    #    println("  ",alpha,"     ", x," | ", y,"          ",ybuddy,"  ", xbuddy,"              ",1-alpha)
+    #    println()
+        if split
+            println("\n\nSPLIT THE ",V-1," SHARES AGAIN")
+
+            @printf("\n     (   %-3d %2d-shares    |    %-3d %2d-shares   )         (  %-3d large %2d-shares  )  ",Int64(num_small_shares/2), V-1,Int64(num_small_shares/2), V-1, num_large_shares, V-1)
+            @printf("\n    %-20d %-20d %-9d %-23d %-5d",y*denom,denom/2,ybuddy*denom,xbuddy*denom,(1-alpha)*denom)
+            #println("    (",Int64(num_small_shares/2),"  ",V-1,"-shares | ",Int64(num_small_shares/2),"  ",V-1,"-shares)      ( ",num_large_shares," large ",V-1,"-shares )    ")
+            #println("     ", y,"    1/2 ", ybuddy,"          ",xbuddy, "        ",1-alpha)
+        end
         println()
-        println("SPLIT THE ",V-1," SHARES AGAIN")
-        println("    (",Int64(num_small_shares/2),"  ",V-1,"-shares | ",Int64(num_small_shares/2),"  ",V-1,"-shares)      ( ",num_large_shares," large ",V-1,"-shares )    ")
-        println("     ", y,"    1/2 ", ybuddy,"          ",xbuddy, "        ",1-alpha)
         println()
         S=sᵥ₋₁
         shares=V₋₁shares
@@ -216,7 +232,6 @@ end
 #this returns x and y where all V shares are in
 #the interval (𝛂, x) and all V-1 shares are in the
 #interval (y, 1-𝛂)
-#This is adapted from psudocode on page 69
 function FINDEND(m,s,alpha,V)
   y=m//s -(1-alpha)*(V-2)
   if y>= (1-alpha)

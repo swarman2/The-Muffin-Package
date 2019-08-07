@@ -115,30 +115,19 @@ function HBM(m, s, proof = false)
         if length(possX) == 0
             return 1
         end
+        X = minimum(possX)
         if proof
             println("possible X's : ")
-            display(possX)
-            X = minimum(possX)
-            println("We take the minimum so X = ",X)
-            println("α ≤ (",d," * ",k," + ",X,")/(3 * ",d," * ",k," + ",a,") = ",(d * k + X)//(3d * k + a))
+            for i = 1: length(possX)
+                print(numerator(possX[i]),"/",denominator(possX[i]),"  ")
+            end
+            println()
+            println()
+        #    display(possX)
+            println("We take the minimum so X = ",numerator(X),"/",denominator(X))
+            println("α ≤ (",d," * ",k," + ",X,")/(3 * ",d," * ",k," + ",a,") = ",numerator((d * k + X)//(3d * k + a)),"/",denominator((d * k + X)//(3d * k + a)))
         end
         return (d * k + X)//(3d * k + a)
     end
     return 1
 end
-
-#Phbm(25,22)
-#Phbm(33,29)
-#Phbm(34,31)
-#Phbm(38,31)
-#Phbm(43,35)
-#Phbm(41,36)
-#Phbm(43,40)
-#Phbm(49,40)
-#Phbm(45,41)
-#Phbm(49,43)
-#Phbm(55,48)
-#Phbm(59,48)
-#Phbm(52,49)
-#Phbm(60,49)
-#Phbm(57,50)
