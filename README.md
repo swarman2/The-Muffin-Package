@@ -56,7 +56,7 @@ If you press 1 a procedure will be printed
 *warning: this will take roughly the same amount of time as previous step*   
 
 If you enter m less than s, it will calculate f(s,m) and then use the duality thereom. 
-
+<!---
 **Example run   m = 11   s = 5**
 
             Enter m: 11
@@ -108,6 +108,7 @@ If you enter m less than s, it will calculate f(s,m) and then use the duality th
             Give 2 students {  15  17  17  17  }
             Give 1 students {  16  16  17  17  }
             ***********************************************
+            --->
 #### Option 2: Given a range of m and s find all largest possible smallest pieces
   The goal of this option is to output a range of largest smallest possible pieces with parameters:
   
@@ -150,6 +151,7 @@ If you enter m less than s, it will calculate f(s,m) and then use the duality th
 * the percent of data solved after adding in a method
   
  *stats are only are saved if you chose to have a txt file*
+ <!---
  **Example run  20 ≤ s ≤ 25    s < m ≤ 30**
  
  
@@ -245,12 +247,12 @@ If you enter m less than s, it will calculate f(s,m) and then use the duality th
 
             FC HALF INT MID EBM HBM GAP TRAIN    =>    26/26.0 = 100.0%
 
-
+--->
  
 #### Option 3: See the proof for a specified m,s, and alpha
 
 You will be prompted to enter m, s and alpha (**enter alpha as an integer/integer**). The program will then print information regarding that m, s and alpha (ex: what types of students there are). Then you can select a method to see how it approaches the problem. You can keep entering methods or enter "none" or "q" to get back to the menu. 
-
+<!---
 **Example Run   m = 5   s = 3   alpha = 5/12**
 
             Enter m: 5
@@ -301,7 +303,7 @@ You will be prompted to enter m, s and alpha (**enter alpha as an integer/intege
             0 small shares and 3 large shares works
             Need at least 3 large shares
             2 students need at least 3 large shares, but there are only 4 large shares, so alpha ≤ 5/12
-
+--->
 
 # Outside Packages Used
 Solvers:
