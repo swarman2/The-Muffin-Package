@@ -8,7 +8,7 @@ This package goes with the book *The Mathematics of Muffins* by William Gasarch,
 
 
 # Requirements
-To run this package you need [Julia](https://julialang.org/downloads/) and some version of [Python](https://www.python.org/downloads/).
+To run this package you need [Julia](https://julialang.org/downloads/).
 
 # Installation
 Download and unzip all the files.To run a Julia file open the Julia REPL and type **include(*file_path*)**. Run *setup.jl* to download all the needed packages. To use the program run *user_interface.jl*.
