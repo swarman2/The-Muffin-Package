@@ -113,7 +113,9 @@ If you enter m less than s, it will calculate f(s,m) and then use the duality th
   The goal of this option is to output a range of largest smallest possible pieces with parameters:
   
   
-  *s < m ≤ max m         min s ≤ s ≤ max s*    
+  *s < m ≤ max m     
+  
+  min s ≤ s ≤ max s*    
   
   The following prompts will ask you to enter max_m, min_s and max_s. 
    
