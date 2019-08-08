@@ -57,7 +57,7 @@ If you press 1 a procedure will be printed
 
 If you enter m less than s, it will calculate f(s,m) and then use the duality thereom. 
 
-**Example run m = 11 s = 5 **
+**Example run   m = 11   s = 5**
 
             Enter m: 11
             Enter s: 5
@@ -150,7 +150,7 @@ If you enter m less than s, it will calculate f(s,m) and then use the duality th
 * the percent of data solved after adding in a method
   
  *stats are only are saved if you chose to have a txt file*
- **Example run  20 ≤ s ≤ 25    s < m ≤ 30 **
+ **Example run  20 ≤ s ≤ 25    s < m ≤ 30**
  
  
              Enter '0' to lock in your settings
@@ -251,7 +251,7 @@ If you enter m less than s, it will calculate f(s,m) and then use the duality th
 
 You will be prompted to enter m, s and alpha (**enter alpha as an integer/integer**). The program will then print information regarding that m, s and alpha (ex: what types of students there are). Then you can select a method to see how it approaches the problem. You can keep entering methods or enter "none" or "q" to get back to the menu. 
 
-**Example Run m = 5 s = 3 alpha = 5/12**
+**Example Run   m = 5   s = 3   alpha = 5/12**
 
             Enter m: 5
             Enter s: 3
