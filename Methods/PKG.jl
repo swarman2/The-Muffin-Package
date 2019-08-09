@@ -228,14 +228,14 @@ function FIND_ALPHA(m,s, time_limit_multi = Inf, time_limit_solv = Inf, perc_arr
    else
       #print("   ",m,"   |   ",s,"    |")# PROC_TIME =  ")
       str=""
-      if FC_alpha <= min_alpha
+      if FC_alpha == min_alpha
       #   print(" FC ")
          str = str * @sprintf(" FC ")
       elseif print_f
          str = str * @sprintf("    ")
       end
 
-      if INT_alpha <= min_alpha
+      if INT_alpha == min_alpha
        # print(" INT ")
       #  GAP_alpha = min_alpha
         str = str * @sprintf(" INT ")
@@ -243,14 +243,14 @@ function FIND_ALPHA(m,s, time_limit_multi = Inf, time_limit_solv = Inf, perc_arr
         str = str * @sprintf("     ")
       end
 
-      if  HALF_alpha <= min_alpha
+      if  HALF_alpha == min_alpha
       #   print(" HALF ")
          str =str* @sprintf(" HALF ")
       elseif print_f
          str = str*@sprintf("      ")
       end
 
-      if EBM_alpha <= min_alpha
+      if EBM_alpha == min_alpha
       #   print(" EBM ")
          str =str* @sprintf(" EBM ")
       elseif print_f
@@ -258,14 +258,14 @@ function FIND_ALPHA(m,s, time_limit_multi = Inf, time_limit_solv = Inf, perc_arr
       end
 
 
-      if HBM_alpha <= min_alpha
+      if HBM_alpha == min_alpha
       #   print(" HBM ")
          str =str* @sprintf(" HBM ")
       elseif print_f
          str = str*@sprintf("     ")
       end
 
-      if MID_alpha <= min_alpha
+      if MID_alpha == min_alpha
       #   print(" MID ")
       #   GAP_alpha = min_alpha
          str =str* @sprintf(" MID " )
@@ -273,14 +273,14 @@ function FIND_ALPHA(m,s, time_limit_multi = Inf, time_limit_solv = Inf, perc_arr
          str = str*@sprintf("     ")
       end
 
-      if GAP_alpha <= min_alpha
+      if GAP_alpha == min_alpha
       #   print(" GAP ")
          str = str*@sprintf(" GAP ")
       elseif print_f
          str = str*@sprintf("     ")
       end
 
-      if TRAIN_alpha <= min_alpha
+      if TRAIN_alpha == min_alpha
       #   print(" TRAIN ")
          str = str *@sprintf(" TRAIN ")
       elseif print_f
@@ -453,7 +453,7 @@ function FIND_ALL(max_m,min_s, max_s, fileKey=0, have_file = false, Scott_data =
    end
 
    if Scott_data
-      df = open("D:\\Documents\\Muffins\\scott_all.txt", "r")
+      df = open("D:\\Documents\\Muffins\\DATA\\scott_all.txt", "r")
       if have_file
          file2 = open(c_dir * "\\not_match_SCOTT_.txt","w")
          println(file2,"---------------------------------------------")
@@ -532,16 +532,7 @@ function FIND_ALL(max_m,min_s, max_s, fileKey=0, have_file = false, Scott_data =
                   scott_alpha =0
                end
                alpha,strng,str_eq,time, t_multi, t_solv, num_pieces = FIND_ALPHA(m,s,time_limit_multi, time_limit_solv, perc_array, scott_alpha,overlap_dic,true,stop_at_first)
-            #   println(num_pieces)
-               #FC(m,s, true)
-               #VINT(m,s,alpha,true)
-               #Half_proof(m,s,alpha)
-               #VMID(m,s,alpha,true)
-               #EBM(m,s,true)
-               #HBM(m,s,true)
-               #VGAP(m,s,alpha,2)
-               #VTRAIN(m,s,alpha,2)
-               #VProc(m,s,alpha,60,60,0,2)
+
                if Scott_data
                   if scott_alpha != alpha
                       V,sᵥ,sᵥ₋₁=SV(m,s)

@@ -118,7 +118,7 @@ function VTRAIN(m,s,alpha, proof = 0)
         if proof >0
             println()
             println("--note: these numbers do NOT have denominator ",denom)
-            println("2(1+floor(",numerator(A),"/",denominator(A)," - ",numerator(B),"/",denominator(B),"(",Int64(numerator(kL1)*(denom/denominator(kL1))),"/",denom," + ",eps,"))) < ",a)
+            println("2(1+floor(",numerator(A),"/",denominator(A)," - ",numerator(B),"/",denominator(B),"(",Float64(numerator(kL1)*(denom/denominator(kL1))),"/",denom," + ",eps,"))) < ",a)
             println(2*(1+floor(A-B*(kL1+eps)))," < ",a)
         end
 

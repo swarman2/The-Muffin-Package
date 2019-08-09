@@ -1,5 +1,19 @@
 #for information on this method see chapter 10 of "The Mathematics of Muffins"
+"""
 
+EBM is the Easy Buddy-Match Method
+
+INPUTS:
+ * m -> number of muffins
+ * s -> number of students
+ * proof -> boolean:
+   (false - No Proof)
+   (true - Print Proof)
+
+OUTPUTS:
+ * α
+ * Print proof (Depending on input (proof))
+ """
 function EBM(m::Int64,s::Int64, proof = false)
     #Before each if is a number this number corresponds to the
     # algorithim under the book heading "The Function EBM" (chapter 10)

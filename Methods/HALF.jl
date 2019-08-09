@@ -3,6 +3,15 @@ include("helper_functions.jl")
 #VHALF verifies if f(m,s)≦ alpha for some m,s and alpha
 #using the half method (i.e. finds all the info and
 #checks to make sure there is a contradiction in "case 5")
+"""
+INPUTS:
+ * m -> number of muffins
+ * s -> number of students
+ * alpha -> α
+
+OUTPUTS:
+ * true if upper-bound can be proved with HALF
+ """
 function VHALF(m,s,alpha)
   if alpha<1//3
     return false
@@ -23,7 +32,16 @@ function VHALF(m,s,alpha)
   end
 return false
 end
+"""
+HALF is the Half-Method
 
+INPUTS:
+ * m -> number of muffins
+ * s -> number of students
+
+OUTPUTS:
+ * α
+ """
 function HALF(m,s)
   if m%s == 0
     return 1
@@ -50,7 +68,18 @@ function HALF(m,s)
   end
 end
 
-#Half proof prints out a proof
+"""
+Half_proof prints out a proof
+
+INPUTS:
+ * m -> number of muffins
+ * s -> number of students
+ * alpha -> α
+
+OUTPUTS:
+ * Prints a proof
+ *returns true if upper_bound can be proved with HALF
+ """
 function Half_proof(m,s,alpha)
   if alpha >1//2
     println("alpha > 1//2 is a bad guess, please rethink")

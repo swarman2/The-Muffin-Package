@@ -1,5 +1,20 @@
 include("helper_functions.jl")
+#For information on this method see chapter 8 of "The Mathematics of Muffins"
+"""
+VINT verifies
 
+INPUTS:
+ * m -> number of muffins
+ * s -> number of students
+ * alphaa -> α
+ * proof -> boolean:
+   (0 - No Proof)
+   (1 - Print Proof)
+
+OUTPUTS:
+ * returns true if it INT can prove the upper-bound
+ * Print proof (Depending on input (proof))
+ """
 function VINT(m,s,alpha, proof = false)
   if m%s == 0
     if proof
@@ -144,7 +159,17 @@ function VINT(m,s,alpha, proof = false)
    return false
  end
 end
+"""
+INT is the Interval Method
 
+INPUTS:
+ * m -> number of muffins
+ * s -> number of students
+
+OUTPUTS:
+ * α
+
+"""
 function INT(m,s)
   if m%s == 0
     return 1

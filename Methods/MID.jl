@@ -262,7 +262,14 @@ function MID(m,s,min_al=1//2, ret_endpts = false)
         return alpha
     end
 end
+"""
+PRINT is used to print arrays in form used by book
 
+INPUTS:
+ * Array ->
+
+OUTPUTS:
+"""
 #Helper function used to print arrays in form used by book
 #(1 0 1) might go to (5/12 7/12)
 function PRINT(array)
@@ -274,7 +281,16 @@ function PRINT(array)
     end
     print(")")
 end
-#binary search using VMID
+"""
+binarySearchMID is binary search using VMID
+
+INPUTS:
+ * m -> number of muffins
+ * s -> number of students
+ * Array ->
+
+OUTPUTS: alpha, endpoints
+"""
 function binarySearchMID(m,s,array)
     return binSearchHelpMID(m,s,array,1,length(array))
 end

@@ -4,10 +4,29 @@ using Cbc
 using GLPK
 using JuMP
 using Printf
+"""
+PROC finds a procedure for f(m,s) = α
 
-#params: m,s,alpha, time limit for the solver, time limit for each mulitset call, endpts (gaps) if prev. found with Mid or GAP
-# whether or not to have a proof (0= no proof, 1=procedure, 2=procedure and matrix)
-#returns wheter or not a procedure was found (true/false), the time out message (or 0), the time the multiset took, the time the solver took
+INPUTS:
+ * m -> number of muffins
+ * s -> number of students
+ * alphaa -> α
+ * time_limit_solv -> time limit for the solver
+ * time_limit_multi -> time limit for each mulitset call
+ * endpts -> (gaps) if prev. found with Mid or GAP
+ * proof -> boolean:
+   (0 - No Proof)
+   (1 - Procedure)
+   (2 - Procedure and Matrix)
+
+OUTPUTS:
+ * Whether or not a procedure was found (true/false)
+ * The time out message (or 0)
+ * The time the multiset took
+ * The time the solver took
+ * Print procedure or matrix (Depending on input (proof))
+
+"""
 function VProc(m,s,alpha, time_limit_solv = 60, time_limit_multi =60, Endpts = 0, proof =0)
     V,sᵥ,sᵥ₋₁=SV(m,s)
     Vshares=V*sᵥ

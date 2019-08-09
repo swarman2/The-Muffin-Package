@@ -1,5 +1,19 @@
 #for information on this method see chapter 4 of "The Mathematics of Muffins"
 using Printf
+"""
+FC is the Floor-Ceiling Theorem
+
+INPUTS:
+ * m -> number of muffins
+ * s -> number of students
+ * proof -> boolean:
+   (0 - No Proof)
+   (1 - Print Proof)
+
+OUTPUTS:
+ * α
+ * Print proof (Depending on input (proof))
+ """
 function FC(m,s, proof = false)
     if m%s == 0
       return 1

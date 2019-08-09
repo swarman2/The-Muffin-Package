@@ -5,7 +5,21 @@ function COND(X, a, d)
         return false
     end
 end
+"""
+HBM is the Hard Buddy-Match Method
 
+INPUTS:
+ * m -> number of muffins
+ * s -> number of students
+ * proof -> boolean:
+   (false - No Proof)
+   (true - Print Proof)
+
+OUTPUTS:
+ * α
+ * Print proof (Depending on input (proof))
+
+"""
 function HBM(m, s, proof = false)
     if m%s == 0
       return 1
