@@ -455,7 +455,7 @@ function FIND_ALL(max_m,min_s, max_s, fileKey=0, have_file = false, Scott_data =
    if Scott_data
       df = open(dirname(@__FILE__)*"/../DATA/scott_all.txt", "r")
       if have_file
-         file2 = open(c_dir * "\\not_match_SCOTT_.txt","w")
+         file2 = open(c_dir * "/not_match_SCOTT_.txt","w")
          println(file2,"---------------------------------------------")
          @printf(file2,"|  %3d ≤ s ≤ %-3d    s < m < %-5d           |",min_s, max_s, max_m)
          @printf(file2,"\n|     m and s that did not match SCOTT      |")
@@ -464,7 +464,7 @@ function FIND_ALL(max_m,min_s, max_s, fileKey=0, have_file = false, Scott_data =
       end
    end
    if  have_file
-      file = open(c_dir *"\\data.txt","w")
+      file = open(c_dir *"/data.txt","w")
       println(file,"---------------------------------------------")
       @printf(file,"|      %3d ≤ s ≤ %-3d    s < m < %-5d        |",min_s, max_s, max_m)
       if Scott_data
@@ -621,19 +621,19 @@ function FIND_ALL(max_m,min_s, max_s, fileKey=0, have_file = false, Scott_data =
       default(size = (2000,1000))
       default(legend=false)
       p1 = plot(s0, m0, seriestype =:scatter,xlims = (0,max_s+2), ylims = maximum(m0)+2,xlabel = "s",ylabel = "non FC m", xticks = 0:5:max_s, yticks = 0:5:max_m, title = "s==0 mod 4")
-      savefig(p1,c_dir*"\\Plot_(s==0 mod 4).png")
+      savefig(p1,c_dir*"/Plot_(s==0 mod 4).png")
       p2 =plot(s1,m1, seriestype =:scatter,xlims = (0,max_s+2), ylims = maximum(m1)+2,xlabel = "s",ylabel = "non FC m",xticks = 0:5:max_s, yticks = 0:5:max_m, title = "s==1 mod 4")
-      savefig(p2,c_dir*"\\Plot_(s==1 mod 4).png")
+      savefig(p2,c_dir*"/Plot_(s==1 mod 4).png")
       p3 =plot(s2,m2,seriestype =:scatter,xlims = (0,max_s+2), ylims = maximum(m2)+2,xlabel = "s",ylabel = "non FC m",xticks = 0:5:max_s, yticks = 0:5:max_m, title = "s==2 mod 4")
-      savefig(p3,c_dir*"\\Plot_(s==2 mod 4).png")
+      savefig(p3,c_dir*"/Plot_(s==2 mod 4).png")
       p4 = plot(s3,m3,seriestype =:scatter,xlims = (0,max_s+2), ylims = maximum(m3)+2,xlabel = "s",ylabel = "non FC m",xticks = 0:5:max_s, yticks = 0:5:max_m, title = "s==3 mod 4")
-      savefig(p4,c_dir*"\\Plot_(s==3 mod 4).png")
+      savefig(p4,c_dir*"/Plot_(s==3 mod 4).png")
       display(plot(p1,p2,p3,p4))
       println("Graphs saved to: ")
-      println(c_dir*"\\Plot_(s==0 mod 4).png")
-      println(c_dir*"\\Plot_(s==1 mod 4).png")
-      println(c_dir*"\\Plot_(s==2 mod 4).png")
-      println(c_dir*"\\Plot_(s==3 mod 4).png")
+      println(c_dir*"/Plot_(s==0 mod 4).png")
+      println(c_dir*"/Plot_(s==1 mod 4).png")
+      println(c_dir*"/Plot_(s==2 mod 4).png")
+      println(c_dir*"/Plot_(s==3 mod 4).png")
    end
    println()
    println("---------------- STATS ----------------")
@@ -713,10 +713,10 @@ function FIND_ALL(max_m,min_s, max_s, fileKey=0, have_file = false, Scott_data =
    println()
    println()
    if have_file
-      println("txt file created at: ",c_dir ,"\\data.txt")
+      println("txt file created at: ",c_dir ,"/data.txt")
    end
    if csv_file
-      str =c_dir*"\\data.csv"
+      str =c_dir*"/data.csv"
       CSV.write(str, data_frame)
       println()
       println("csv file created at: ",str)
@@ -732,15 +732,15 @@ function FIND_ALL(max_m,min_s, max_s, fileKey=0, have_file = false, Scott_data =
          println(removed[i])
       end
       p1 = plot(numPieces_arr, Time_arr, seriestype =:scatter, title = "Solver Variables vs Total Time")
-      savefig(p1,c_dir*"\\TotalTime.png")
+      savefig(p1,c_dir*"/TotalTime.png")
       p2 = plot(numPieces_arr, multiTime_arr, seriestype =:scatter, title = "Solver Variables vs Multi Time")
-      savefig(p2,c_dir*"\\MultiTime.png")
+      savefig(p2,c_dir*"/MultiTime.png")
       p3 =plot(numPieces_arr, solveTime_arr,seriestype =:scatter, title = "Solver Variables vs Solve Time")
-      savefig(p3,c_dir*"\\SolvTime.png")
+      savefig(p3,c_dir*"/SolvTime.png")
       display(plot(p1,p2,p3))
       println("Graphs saved to: ")
-      println(c_dir*"\\TotalTime.png")
-      println(c_dir*"\\MultiTime.png")
-      println(c_dir*"\\SolvTime.png")
+      println(c_dir*"/TotalTime.png")
+      println(c_dir*"/MultiTime.png")
+      println(c_dir*"/SolvTime.png")
    end
 end
