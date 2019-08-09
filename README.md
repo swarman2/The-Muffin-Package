@@ -22,10 +22,10 @@ The menu will look like this
             3. See upper-bound information for a given m, s, and optionally alpha
             4. Quit
 
-#### Basic functionality:
+## Basic functionality:
    * Any user input is not case sensitive
    * To get back to the menu enter "q" at an input prompt
-#### Option 1: Given m and s what is the largest possible smallest piece
+## Option 1: Given m and s what is the largest possible smallest piece
 The following prompts will get you to enter an amount of muffins (m) and an amount of students (s)
 
 * Constraints on m and s: 
@@ -111,7 +111,7 @@ If you enter m less than s, it will calculate f(s,m) and then use the duality th
             Give 1 students {  16  16  17  17  }
             ***********************************************
             --->
-#### Option 2: Given a range of m and s find all largest possible smallest pieces
+## Option 2: Given a range of m and s find all largest possible smallest pieces
   The goal of this option is to output a range of largest smallest possible pieces with parameters:
   
   
@@ -253,7 +253,7 @@ If you enter m less than s, it will calculate f(s,m) and then use the duality th
 
 --->
  
-#### Option 3: See the proof for a specified m,s, and alpha
+## Option 3: See the proof for a specified m,s, and alpha
 
 You will be prompted to enter m, s and either enter alpha (**enter alpha as an integer/integer**) or enter 0.
 
