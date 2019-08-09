@@ -22,10 +22,10 @@ The menu will look like this
             3. See upper-bound information for a given m, s, and optionally alpha
             4. Quit
 
-#### Basic functionality:
+## Basic functionality:
    * Any user input is not case sensitive
    * To get back to the menu enter "q" at an input prompt
-#### Option 1: Given m and s what is the largest possible smallest piece
+## Option 1: Given m and s what is the largest possible smallest piece
 The following prompts will get you to enter an amount of muffins (m) and an amount of students (s)
 
 * Constraints on m and s: 
@@ -111,7 +111,7 @@ If you enter m less than s, it will calculate f(s,m) and then use the duality th
             Give 1 students {  16  16  17  17  }
             ***********************************************
             --->
-#### Option 2: Given a range of m and s find all largest possible smallest pieces
+## Option 2: Given a range of m and s find all largest possible smallest pieces
   The goal of this option is to output a range of largest smallest possible pieces with parameters:
   
   
@@ -253,9 +253,15 @@ If you enter m less than s, it will calculate f(s,m) and then use the duality th
 
 --->
  
-#### Option 3: See the proof for a specified m,s, and alpha
+## Option 3: See the proof for a specified m,s, and alpha
 
-You will be prompted to enter m, s and alpha (**enter alpha as an integer/integer**). The program will then print information regarding that m, s and alpha (ex: what types of students there are). Then you can select a method to see how it approaches the problem. You can keep entering methods or enter "none" or "q" to get back to the menu. 
+You will be prompted to enter m, s and either enter alpha (**enter alpha as an integer/integer**) or enter 0.
+
+###### Entering 0
+If you chose to enter 0 the program will print the upper-bound that each method provides. You can then chose to see the proof of any of the upper-bounds from the method that provided them. You can keep entering methods or enter "none" or "q" to get back to the menu.
+
+###### Entering alpha
+If you chose to enter alpha the program will print which methods verified that alpha and which did not, as well as what upper-bound each method did provide. You can then see the proofs from each method but unlike when entering 0 **all the methods will be trying to prove the alpha you entered**
 <!---
 **Example Run   m = 5   s = 3   alpha = 5/12**
 
