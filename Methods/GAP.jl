@@ -25,15 +25,31 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
     #end
     denom=denominator(alpha)
     denom=lcm(s,denom)
+    if proof >= 3
+        file = open(dirname(@__FILE__)*"/../DATA/"*string(m)*"-"*string(s)*".txt","a+")
+        println(file)
+        println(file,"*******************************************************")
+        println(file,"*                 GAP PROOF                          *")
+        println(file,"*******************************************************")
+        println(file)
 
-    if proof ==1 || proof ==2
+    else
+        file =0
+    end
+    if proof >=1
         println()
-        println("PROOF OF f(",m,", ",s,") = ",numerator(alpha),"/",denominator(alpha))
+        println("GAP PROOF OF f(",m,", ",s,") = ",numerator(alpha),"/",denominator(alpha))
         println("There are ",V,"-students and ",V-1,"-students")
-        println(sᵥ," ",V,"-students  ",sᵥ₋₁," ",V-1,"-students")
+        println(sᵥ," ",V,"-shares  ",sᵥ₋₁," ",V-1,"-shares")
         println("All numbers assumed to have denominator ",denom)
     end
-
+    if proof >=3
+        println(file)
+        println(file,"GAP PROOF OF f(",m,", ",s,") = ",numerator(alpha),"/",denominator(alpha))
+        println(file,"There are ",V,"-students and ",V-1,"-students")
+        println(file,sᵥ," ",V,"-shares  ",sᵥ₋₁," ",V-1,"-shares")
+        println(file,"All numbers assumed to have denominator ",denom)
+    end
     if(V₋₁shares<Vshares)
          #___(_______)________(_____)___|___(_____)____
          #alpha   y-buddy   xbuddy   x  |   y    1-alpha
@@ -74,15 +90,32 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
     Endpoints=reshape(Endpoints,(2,Int64(length(Endpoints)/2)))
     Endpoints = transpose(Endpoints)
     #######
-    if proof ==1 || proof ==2
+    if proof >=1
         println("Intervals before Buddy-Match" )
         endpoints=convert_Int(endpoints)
         display(endpoints)
     end
+    if proof >=3
+        println(file,"Intervals before Buddy-Match" )
+        endpoints=convert_Int(endpoints)
+        row, col = size(endpoints)
+        for i = 1:row
+            for j=1:col
+                print(file,endpoints[i,j]," ")
+            end
+            println(file)
+        end
+    end
     if x>y
-        if proof ==1 || proof ==2
+        if proof >=1
             println("INVALID INTERVALS")
         end
+        if proof >=3
+            println(file)
+            println(file,"INVALID INTERVALS")
+            close(file)
+        end
+
         if ret_endpts
             B = collect(alpha*denom:1:(1-alpha)*denom)
             #display(B)
@@ -103,6 +136,9 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
         if proof >= 1
             print("\nSPLIT AT 1/2 (",(denom/2),") ")
         end
+        if proof >=3
+            print(file,"\nSPLIT AT 1/2 (",(denom/2),") ")
+        end
     end
 
     endpoints=sort(collect(Iterators.flatten(endpoints)))
@@ -114,7 +150,7 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
         gap_found=true
         while(gap_found == true)
             #buddy match it
-            Endpoints = buddymatch(Endpoints,V,y,m,s,denom,0)
+            Endpoints = buddymatch(Endpoints,V,y,m,s,denom,0,0)
             #Endpoints = buddymatch(Endpoints,V,y,m,s,denom,0)
             row, col= size(Endpoints)
             numIntervals = row
@@ -179,13 +215,19 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
         end #end finding gaps
     end
 
-    if proof ==1 || proof ==2
+    if proof >=1
         if V == 3 && !((denom*m/2s) in endpoints)
             print("  Split m/2s (",(denom*m/(2s)),")")
         end
         println()
     end
-    endpoints = buddymatch(endpoints,V,y,m,s,denom)
+    if proof >=3
+        if V == 3 && !((denom*m/2s) in endpoints)
+            print(file,"  Split m/2s (",(denom*m/(2s)),")")
+        end
+        println(file)
+    end
+    endpoints = buddymatch(endpoints,V,y,m,s,denom,proof,file)
     row,col=size(endpoints)
 
     #if V=3 split at m/2s and buddy match in a special way
@@ -198,10 +240,20 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
             endpoints=reshape(endpoints,(2,Int64(length(endpoints)/2)))
             endpoints = transpose(endpoints)
         end
-        if proof == 1 || proof == 2
+        if proof >=1
         #    println("\nSPLIT AT m//2s (",Int64(denom*m//2s),")")
             endpoints = convert_Int(endpoints)
             display(endpoints)
+        end
+        if proof >=3
+            endpoints = convert_Int(endpoints)
+            row, col = size(endpoints)
+            for i = 1:row
+                for j=1:col
+                    print(file,endpoints[i,j]," ")
+                end
+                println(file)
+            end
         end
         row,col=size(endpoints)
         #special buddy match for closed interval
@@ -225,8 +277,11 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
             end
 
             if buddyIn_1 == false && buddyIn_2 == false && denom-upper >= endpoints[1,1] && denom-lower <= endpoints[row,col]
-                if proof ==1 || proof ==2
+                if proof >=1
                     println("[",float(denom-upper),"  ",float(denom-lower),"] by buddying [",float(lower),"  ",float(upper),"]")
+                end
+                if proof >=3
+                    println(file,"[",float(denom-upper),"  ",float(denom-lower),"] by buddying [",float(lower),"  ",float(upper),"]")
                 end
                 endpoints=[endpoints; [(denom-upper) (denom-lower)];  [(denom-upper) (denom-lower)]]
                 i=1
@@ -250,8 +305,11 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
                     end
                 end
                 if matchIn_1 == false && matchIn_2 == false && (m//s)*denom-upper >= endpoints[1,1] && (m//s)*denom-lower <= endpoints[row,col]
-                    if proof ==1 || proof ==2
+                    if proof >=1
                         println("[",Float64((m//s)*denom-upper),"  ",Float64((m//s)*denom-lower),"] by matching [",Float64(lower),"  ",Float64(upper),"]")
+                    end
+                    if proof >=3
+                        println(file,"[",Float64((m//s)*denom-upper),"  ",Float64((m//s)*denom-lower),"] by matching [",Float64(lower),"  ",Float64(upper),"]")
                     end
                     endpoints=[endpoints; [((m//s)*denom-upper) ((m//s)*denom-lower)];  [((m//s)*denom-upper) ((m//s)*denom-lower)]]
                     i=1
@@ -268,7 +326,7 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
     gap_found=true
     while(gap_found == true)
         #buddy match it
-        endpoints = buddymatch(endpoints,V,y,m,s,denom,proof)
+        endpoints = buddymatch(endpoints,V,y,m,s,denom,proof,file)
 
 
         #find out the distribtion of intervals (V or V-1)
@@ -285,7 +343,7 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
 
         possV = Vector{Vector{Int64}}()
         possV_ = Vector{Vector{Int64}}()
-        if proof ==1 || proof ==2
+        if proof >=1
             endpoints = convert_Int(endpoints)
             println("\n",V," intervals")
             for j=1:numVIntervals
@@ -301,6 +359,25 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
                     println("J_",j-numVIntervals,": [",endpoints[j,1],", ",endpoints[j,2],"]")
                 else
                     println("J_",j-numVIntervals,": (",endpoints[j,1],", ",endpoints[j,2],")")
+                end
+            end
+        end
+        if proof >=3
+            endpoints = convert_Int(endpoints)
+            println(file,"\n",V," intervals")
+            for j=1:numVIntervals
+                if endpoints[j,1]==endpoints[j,2]
+                    println(file,"I_",j,": [",endpoints[j,1],", ",endpoints[j,2],"]")
+                else
+                    println(file,"I_",j,": (",endpoints[j,1],", ",endpoints[j,2],")")
+                end
+            end
+            println(file,"\n",V-1," intervals")
+            for j=numVIntervals+1: row
+                if endpoints[j,1]==endpoints[j,2]
+                    println(file,"J_",j-numVIntervals,": [",endpoints[j,1],", ",endpoints[j,2],"]")
+                else
+                    println(file,"J_",j-numVIntervals,": (",endpoints[j,1],", ",endpoints[j,2],")")
                 end
             end
         end
@@ -343,7 +420,7 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
                 append!(possV_, permV_[i,:])
             end
         end
-        if proof ==1 || proof ==2
+        if proof >=1
             println("\nPossible ",V," students:")
             for i=1:length(possV)
                 PRINT(possV[i])
@@ -356,6 +433,19 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
             end
                 println()
         end
+        if proof >=3
+            println(file,"\nPossible ",V," students:")
+            for i=1:length(possV)
+                PRINT(possV[i],file)
+                println(file)
+            end
+            println(file,"\nPossible ",V-1," students:")
+            for i=1:length(possV_)
+                PRINT(possV_[i],file)
+                println(file)
+            end
+                println(file)
+        end
         #look for more gaps using student distribtions
         mat_V=transpose(hcat(possV...))
         mat_V_=transpose(hcat(possV_...))
@@ -365,9 +455,9 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
         gap_found1 = false
         gap_found2 =false
 
-        endpoints, gap_found1 = findGaps(mat_V,1,numVIntervals, endpoints,m,s,denom,proof)
+        endpoints, gap_found1 = findGaps(mat_V,1,numVIntervals, endpoints,m,s,denom,proof,true,file)
         if !gap_found1
-            endpoints, gap_found2 = findGaps(mat_V_,numVIntervals+1,numVIntervals + numV_Intervals, endpoints,m,s,denom,proof)
+            endpoints, gap_found2 = findGaps(mat_V_,numVIntervals+1,numVIntervals + numV_Intervals, endpoints,m,s,denom,proof,true,file)
         end
         if gap_found1||gap_found2
             gap_found = true
@@ -376,9 +466,14 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
         end
     end #end finding gaps
 
-    if proof ==1 || proof ==2
+    if proof >=1
         println("NO MORE GAPS")
         println()
+
+    end
+    if proof >=3
+        println(file,"NO MORE GAPS")
+        println(file)
 
     end
     numIntervals = row
@@ -477,10 +572,42 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
 
         #display(symmIntervals)
     end
+    if proof>=3
+        row, col= size(endpoints)
+        numIntervals = row
+        numVIntervals = 0
+        for i =1: row
+            if endpoints[i,2]<=x*denom
+                numVIntervals = numVIntervals+1
+            end
+        end
+        println(file,"\nSYMMETRIC INTERVALS")
+        row,col = size(symmIntervals)
+        for i = 1:row
+            a = symmIntervals[i,1]
+            b = symmIntervals[i,2]
+            if a > numVIntervals && b > numVIntervals
+                println(file," J_",a-numVIntervals," = J_",b-numVIntervals)
+            elseif b > numVIntervals
+                println(file," I_",a," = J_",b-numVIntervals)
+            elseif a > numVIntervals
+                println(file," J_",a-numVIntervals," = I_",b)
+            else
+                println(file," I_",a," = I_",b)
+            end
+        end
+
+        #display(symmIntervals)
+    end
     if length(symmIntervals)==0
         if proof>=1
             println("No symmetric intervals")
             println("f(",m,", ",s,")  ≤ ",numerator(alpha),"/",denominator(alpha))
+        end
+        if proof >=3
+            println(file,"No symmetric intervals")
+            println(file,"f(",m,", ",s,")  ≤ ",numerator(alpha),"/",denominator(alpha))
+            close(file)
         end
         if ret_endpts
             #denom = denom/2
@@ -498,7 +625,7 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
         return true
     end
     row_symm, col_symm = size(symmIntervals)
-    if proof==1 || proof ==2
+    if proof>=1
         println("\nPossible ",V," students:")
         for i=1:length(possV)
             PRINT(possV[i])
@@ -510,11 +637,27 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
             println()
         end
     end
+    if proof>=1
+        println(file,"\nPossible ",V," students:")
+        for i=1:length(possV)
+            PRINT(possV[i],file)
+            println(file)
+        end
+        println(file,"\nPossible ",V-1," students:")
+        for i=1:length(possV_)
+            PRINT(possV_[i],file)
+            println(file)
+        end
+    end
     #test and make sure there is at least one possible distribtion
     #for both the V and the V-1 shares
     if length(mat_V)==0
-        if proof==1 || proof ==2
+        if proof>=1
             println("\nNo possible distributions of ",V," shares: f(",m,", ",s,")  ≤ ",alpha)
+        end
+        if proof>=3
+            println(file,"\nNo possible distributions of ",V," shares: f(",m,", ",s,")  ≤ ",alpha)
+            close(file)
         end
         if ret_endpts
             B = collect(alpha*denom:1:(1-alpha)*denom)
@@ -536,8 +679,12 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
         end
         return true
     elseif length(mat_V_)==0
-        if proof ==1 || proof ==2
+        if proof >=1
             println("\nNo possible distributions of ",V-1," shares: f(",m,", ",s,")  ≤ ",alpha)
+        end
+        if proof >=3
+            println(file,"\nNo possible distributions of ",V-1," shares: f(",m,", ",s,")  ≤ ",alpha)
+            close(file)
         end
         if ret_endpts
             #denom = denom/2
@@ -597,6 +744,16 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
         println("\nIf intervals i and j are symmetric, subtract col i from col j and add as a row to A")
         display(A)
     end
+    if proof == 4
+        println(file,"\nIf intervals i and j are symmetric, subtract col i from col j and add as a row to A")
+        row, col = size(A)
+        for i = 1:row
+            for j=1:col
+                @printf(file,"%4d  ",A[i,j])
+            end
+            println(file)
+        end
+    end
     row,col=size(A)
     #add zeros for each row of I₁ - I₂
     b=zeros(Int64,row)
@@ -627,8 +784,18 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
         A=[A;Sum_2]
     end
     if proof == 2
-        println("\nAdd a row of ",V,"'s and a row of ",V-1,"'s \n(these when mulitplied by number of each type of distribution of students will add to number of ",V," students and number of ",V-1," students)")
+        println("\nAdd a row of ",V,"'s and a row of ",V-1,"'s \n(these when multiplied by number of each type of distribution of students will add to number of ",V," students and number of ",V-1," students)")
         display(A)
+    end
+    if proof == 4
+        println(file,"\nAdd a row of ",V,"'s and a row of ",V-1,"'s \n(these when multiplied by number of each type of distribution of students will add to number of ",V," students and number of ",V-1," students)")
+        row, col = size(A)
+        for i = 1:row
+            for j=1:col
+                @printf(file,"%4d  ",A[i,j])
+            end
+            println(file)
+        end
     end
     #Append a row of ones to A (num stud per distribtion adds to num VV students)
     Ones=(ones(Int64,col))'
@@ -695,10 +862,30 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
     if proof ==2
         println("\nAdd a rows for the sums of the ",VV," shares symmetric around 1/2")
         display(A)
-        println("Then solve the system for the number of each type of distribtuion (= ",b,")")
+        println("Then solve the system for the number of each type of distribution (= ",b,")")
         display(A)
     elseif proof ==1 || proof ==2
-        println("Then solve the system for the number of each type of distribtuion (= ",b,")")
+        println("Then solve the system for the number of each type of distribution (= ",b,")")
+    end
+    if proof ==4
+        println(file,"\nAdd a rows for the sums of the ",VV," shares symmetric around 1/2")
+        row, col = size(A)
+        for i = 1:row
+            for j=1:col
+                @printf(file,"%4d  ",A[i,j])
+            end
+            println(file)
+        end
+        println(file,"Then solve the system for the number of each type of distribution (= ",b,")")
+        row, col = size(A)
+        for i = 1:row
+            for j=1:col
+                @printf(file,"%4d  ",A[i,j])
+            end
+            println(file)
+        end
+    elseif proof == 3
+        println(file, "Then solve the system for the number of each type of distribution (= ",b,")")
     end
 
     row,col=size(A)
@@ -711,10 +898,16 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
 
     optimize!(model)
     if(termination_status(model)==MOI.OPTIMAL)
-        if proof == 1 || proof ==2
+        if proof >=1
             display(value.(X))
-            println("\nThere is a solution on the naturals, f(",m,", ",s,")  > ",numerator(alpha),"/",denominator(alpha))
+            println("\nThere is a solution on the naturals, failed to prove f(",m,", ",s,")  ≤ ",numerator(alpha),"/",denominator(alpha))
         end
+        if proof >=3
+            println(file," solution = ",value.(X))
+            println(file,"\nThere is a solution on the naturals, failed to prove f(",m,", ",s,")  ≤ ",numerator(alpha),"/",denominator(alpha))
+            close(file)
+        end
+
         if ret_endpts
             #denom = denom/2
             B = collect(alpha*denom:1:(1-alpha)*denom)
@@ -729,8 +922,12 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
         end
         return false
     else
-        if proof ==1 || proof ==2
+        if proof >=1
             println("\nThere is no solution on the naturals, f(",m,", ",s,")  ≤ ",numerator(alpha),"/",denominator(alpha))
+        end
+        if proof >=3
+            println(file,"\nThere is no solution on the naturals, f(",m,", ",s,")  ≤ ",numerator(alpha),"/",denominator(alpha))
+            close(file)
         end
         if ret_endpts
             #denom = denom/2
@@ -760,7 +957,7 @@ end
 #output
 # newendpoints, _gap
 # returns a matrix which includes any new gaps, and a bool which is true if a gap was found false otherwise
-function findGaps(possDist,front,back,endpoints,m,s,denom,proof = 0, gap_extended=true)
+function findGaps(possDist,front,back,endpoints,m,s,denom,proof = 0, gap_extended=true, file = 0)
     #find gaps
     _gap=false
     #    println("NEW CALL")
@@ -903,7 +1100,7 @@ function findGaps(possDist,front,back,endpoints,m,s,denom,proof = 0, gap_extende
                 upperbound=Int64(endpt[i])
                 lowerbound=Int64(endpt[2i])
                 if lowerbound>upperbound
-                    if proof ==1 || proof ==2
+                    if proof >=1
                         println("NEW GAP FOUND: [",upperbound,",",lowerbound,"]")
                         k=1
                         for i=1:numDistributions
@@ -913,6 +1110,20 @@ function findGaps(possDist,front,back,endpoints,m,s,denom,proof = 0, gap_extende
                                 print(lowEnd[k]," ≤ ")
                                 PRINT(possDist[i,:])
                                 println(" ≤ ",highEnd[k])
+                                k=k+1
+                            end
+                        end
+                    end
+                    if proof >=3
+                        println(file,"NEW GAP FOUND: [",upperbound,",",lowerbound,"]")
+                        k=1
+                        for i=1:numDistributions
+
+                            if(possDist[i,j-front+1]!=0)
+                            #    println(possDistV[i,:])
+                                print(file,lowEnd[k]," ≤ ")
+                                PRINT(possDist[i,:],file)
+                                println(file," ≤ ",highEnd[k])
                                 k=k+1
                             end
                         end
@@ -928,28 +1139,45 @@ function findGaps(possDist,front,back,endpoints,m,s,denom,proof = 0, gap_extende
 
             if temp_endpt[1]<endpoints[j,1] #then change upper bound
                 _gap=true
-                if proof == 1 || proof==2
+                if proof >=1
                     println("GAP EXTENDED: ",Int64(newendpoints[j,2])," changed to ",Int64(temp_endpt[2]))
                 end
+                if proof >=3
+                    println(file,"GAP EXTENDED: ",Int64(newendpoints[j,2])," changed to ",Int64(temp_endpt[2]))
+                end
                 newendpoints[j,2]=temp_endpt[2]
-                if proof
+                if proof >=1
                     k=1
                     for i=1:numDistributions
                         if(possDist[i,j-front+1]!=0)
                             print(lowEnd[k]," ≤ ")
                             PRINT(possDist[i,:])
                             println(" ≤ ",highEnd[k])
+                            k=k+1
+                        end
+                    end
+                end
+                if proof >=3
+                    k=1
+                    for i=1:numDistributions
+                        if(possDist[i,j-front+1]!=0)
+                            print(file,lowEnd[k]," ≤ ")
+                            PRINT(possDist[i,:],file)
+                            println(file," ≤ ",highEnd[k])
                             k=k+1
                         end
                     end
                 end
             elseif temp_endpt[1]>endpoints[j,1] && gap_extended
                 _gap=true
-                if proof ==1 || proof ==2
+                if proof >=1
                     println("GAP EXTENDED: ",Int64(newendpoints[j,1])," changed to ",Int64(temp_endpt[1]))
                 end
+                if proof >=3
+                    println(file,"GAP EXTENDED: ",Int64(newendpoints[j,1])," changed to ",Int64(temp_endpt[1]))
+                end
                 newendpoints[j,1]=temp_endpt[1]
-                if proof == 1 || proof ==2
+                if proof>=1
                     k=1
                     for i=1:numDistributions
                         if(possDist[i,j-front+1]!=0)
@@ -960,6 +1188,19 @@ function findGaps(possDist,front,back,endpoints,m,s,denom,proof = 0, gap_extende
                         end
                     end
                 end
+
+                if proof>=3
+                    k=1
+                    for i=1:numDistributions
+                        if(possDist[i,j-front+1]!=0)
+                            print(file,lowEnd[k]," ≤ ")
+                            PRINT(possDist[i,:],file)
+                            println(file," ≤ ",highEnd[k])
+                            k=k+1
+                        end
+                    end
+                end
+
             end
 
         end
@@ -976,7 +1217,7 @@ end
 #m,s,denom and proof are as before
 
 #output a matrix which includes any new endpoints
-function buddymatch(endpoints, V,y,m,s,denom,proof = 0)
+function buddymatch(endpoints, V,y,m,s,denom,proof = 0, file = 0)
     row,col=size(endpoints)
     i=1
     while i!=row
@@ -999,8 +1240,11 @@ function buddymatch(endpoints, V,y,m,s,denom,proof = 0)
             end
         end
         if buddyIn_1 == false && buddyIn_2 == false && denom-upper >=endpoints[1,1] && denom-lower <= endpoints[row,col]
-            if proof ==1 || proof ==2
+            if proof >=1
                 println("[",Float64(denom-upper),"  ",Float64(denom-lower),"] by buddying [",Float64(lower),"  ",Float64(upper),"]")
+            end
+            if proof >=3
+                println(file,"[",Float64(denom-upper),"  ",Float64(denom-lower),"] by buddying [",Float64(lower),"  ",Float64(upper),"]")
             end
             endpoints=[endpoints; [(denom-upper) (denom-lower)]]
             i=1
@@ -1024,8 +1268,11 @@ function buddymatch(endpoints, V,y,m,s,denom,proof = 0)
                 end
             end
             if matchIn_1 == false && matchIn_2 == false && (m//s)*denom-upper >= endpoints[1,1] && (m//s)*denom-lower <= endpoints[row,col]
-                if proof ==1 || proof ==2
+                if proof >=1
                     println("[",Float64((m//s)*denom-upper),"  ",Float64((m//s)*denom-lower),"] by matching [",Float64(lower),"  ",Float64(upper),"]")
+                end
+                if proof >=3
+                    println(file,"[",Float64((m//s)*denom-upper),"  ",Float64((m//s)*denom-lower),"] by matching [",Float64(lower),"  ",Float64(upper),"]")
                 end
                 endpoints=[endpoints; [((m//s)*denom-upper) ((m//s)*denom-lower)]]
                 i=1
@@ -1043,14 +1290,24 @@ end
 #PRINT prints an array in "converted" form
 #ex: array = [2 0 0 1] (lets say that means use 2 I_1 shares and 1 I_4 shares)
 # this function would print (1 1 4)
-function PRINT(array)
-    print("( ")
-    for i=1:length(array)
-        for j=1:array[i]
-            print(i," ")
+function PRINT(array, file = 0)
+    if file != 0
+        print(file,"( ")
+        for i=1:length(array)
+            for j=1:array[i]
+                print(file,i," ")
+            end
         end
+        print(file,")")
+    else
+        print("( ")
+        for i=1:length(array)
+            for j=1:array[i]
+                print(i," ")
+            end
+        end
+        print(")")
     end
-    print(")")
 end
 
 #This just converts from rational to int (or float)

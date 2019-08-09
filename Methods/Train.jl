@@ -2,16 +2,30 @@ include("helper_functions.jl")
 include("GAP.jl")
 using JuMP
 using GLPK
-
+#if proof == 3 prints to file
 function VTRAIN(m,s,alpha, proof = 0)
     V,sᵥ,sᵥ₋₁=SV(m,s)
     Vshares=V*sᵥ
     V₋₁shares=(V-1)*sᵥ₋₁
     x,y=FINDEND(m,s,alpha,V)
+    if proof == 3
+
+        file =open(dirname(@__FILE__)*"/../DATA/"*string(m)*"-"*string(s)*".txt","a+")
+        println(file)
+        println(file,"*******************************************************")
+        println(file,"*                 TRAIN PROOF                          *")
+        println(file,"*******************************************************")
+        println(file)
+    end
+
     if x>y
     #    print("                                                         intervals not disjoint")
         if proof >=1
             println("Intervals not disjoint, alpha could be > ",alpha)
+        end
+        if proof == 3
+            println(file,"Intervals not disjoint, alpha could be > ",alpha)
+            close(file)
         end
         return false
     end
@@ -35,13 +49,30 @@ function VTRAIN(m,s,alpha, proof = 0)
             if proof >0
                 println("no endpoints")
             end
+            if proof == 3
+                println(file,"no endpoints")
+                close(file)
+            end
             return false
         end
         if proof>=1
-            print("The following numberes assumed to have denominator: ")
+            print("The following numbers assumed to have denominator: ")
             println(denom)
             println("Intervals: ")
-            display(convert_Int(endpoints*denom))
+            display(convert_Int(endpoints))
+        end
+        if proof == 3
+            print(file,"The following numbers assumed to have denominator: ")
+            println(file,denom)
+            println(file,"Intervals: ")
+            row,col = size(endpoints)
+            endpoints = convert_Int(endpoints)
+            for row_end = 1:row
+                for col_end = 1: col
+                    print(file,endpoints[row_end,col_end],"  ")
+                end
+                println(file)
+            end
         end
         row,col = size(endpoints)
 
@@ -90,6 +121,11 @@ function VTRAIN(m,s,alpha, proof = 0)
             if proof >=1
                 println("No types of students, alpha ≤ ",alpha)
             end
+            if proof == 3
+                println(file,"No types of students, alpha ≤ ",alpha)
+                close(file)
+            end
+
             return true
         end
         row_V, col_V = size(mat_V)
@@ -112,6 +148,15 @@ function VTRAIN(m,s,alpha, proof = 0)
             println("B = ", numerator(B),"/",denominator(B))
             println("=> A = ", numerator(B-B*alpha -1),"/",denominator(B-B*alpha -1))
         end
+        if proof == 3
+            println(file,"kL1: ",Float64(kL1*denom),"  kL2: ",Float64(kL2*denom),"  kL3: ",Float64(kL3*denom))
+            println(file,"Z: ",Float64(Z*denom)," Y: ",Y," a = ",a, " SS = ",SS)
+            println(file,)
+            println(file,"Let B = max(2/(kL2-alpha), 1/(Z+1-alpha))")
+            println(file,"--note: A and B do NOT have denominator ",denom)
+            println(file,"B = ", numerator(B),"/",denominator(B))
+            println(file,"=> A = ", numerator(B-B*alpha -1),"/",denominator(B-B*alpha -1))
+        end
         A = B-B*alpha -1
         eps = 10e-10
         i=0
@@ -120,6 +165,13 @@ function VTRAIN(m,s,alpha, proof = 0)
             println("--note: these numbers do NOT have denominator ",denom)
             println("2(1+floor(",numerator(A),"/",denominator(A)," - ",numerator(B),"/",denominator(B),"(",Float64(numerator(kL1)*(denom/denominator(kL1))),"/",denom," + ",eps,"))) < ",a)
             println(2*(1+floor(A-B*(kL1+eps)))," < ",a)
+        end
+        if proof == 3
+            println(file)
+            println(file,"--note: these numbers do NOT have denominator ",denom)
+            println(file,"2(1+floor(",numerator(A),"/",denominator(A)," - ",numerator(B),"/",denominator(B),"(",Float64(numerator(kL1)*(denom/denominator(kL1))),"/",denom," + ",eps,"))) < ",a)
+            println(file,2*(1+floor(A-B*(kL1+eps)))," < ",a)
+            close(file)
         end
 
         if 2(1+floor(A-B*(kL1+eps)))<a

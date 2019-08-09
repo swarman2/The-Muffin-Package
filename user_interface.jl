@@ -917,14 +917,42 @@ function print_proof(method, m, s, alpha)
         else
             gap_proof = 1
         end
+        println("Would you like to save the proof to a file? (y,n)")
+        f = readline()
+        f = lowercase(f)
+        while  f != "yes" && f!="no" && f!="y"&& f!="n"
+            println("Enter yes or no")
+            f=readline()
+            f=lowercase(f)
+        end
+        if f == "yes" || f =="y"
+            if gap_proof == 2
+                gap_proof = 4
+            else
+                gap_proof = 3
+            end
+        end
         println("\nGAP proof of upperbound")
         println("***********************************************")
         VGAP(m,s,alpha,gap_proof)
         println("***********************************************")
     elseif method == "TRAIN"||method == "T"
+        println("Would you like to save the proof to a file? (y,n)")
+        f = readline()
+        f = lowercase(f)
+        while  f != "yes" && f!="no" && f!="y"&& f!="n"
+            println("Enter yes or no")
+            f=readline()
+            f=lowercase(f)
+        end
+        if f == "yes" || f =="y"
+            file = 3
+        else
+            file= 1
+        end
         println("\nTrain proof of upperbound")
         println("***********************************************")
-        VTRAIN(m,s,alpha,1)
+        VTRAIN(m,s,alpha,file)
         println("***********************************************")
     end
 end
