@@ -8,14 +8,14 @@ using Printf
 #params: m,s,alpha, time limit for the solver, time limit for each mulitset call, endpts (gaps) if prev. found with Mid or GAP
 # whether or not to have a proof (0= no proof, 1=procedure, 2=procedure and matrix)
 #returns wheter or not a procedure was found (true/false), the time out message (or 0), the time the multiset took, the time the solver took
-function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 0, proof =0)
+function VProc(m,s,alpha, time_limit_solv = 60, time_limit_multi =60, Endpts = 0, proof =0)
     V,sᵥ,sᵥ₋₁=SV(m,s)
     Vshares=V*sᵥ
     V₋₁shares=(V-1)*sᵥ₋₁
-    x,y=FINDEND(m,s,alphaa,V)
+    x,y=FINDEND(m,s,alpha,V)
     xbuddy =1-x
     if proof >= 1
-        println("\nProcedure for f(",m,", ",s,") = ",numerator(alphaa),"/",denominator(alphaa))
+        println("\nProcedure for f(",m,", ",s,") = ",numerator(alpha),"/",denominator(alpha))
         println("***********************************************")
         #print("V = ",V,"   ")
         #println("s_V = ",sᵥ)
@@ -23,21 +23,27 @@ function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 
     #denom is the least common mulitple between s and the
     #denominator of alpha (it is the denominator of the
     #fractions in the set of possible piece sizes [later called B])
-    num=numerator(alphaa)
-    denom=denominator(alphaa)
+    num=numerator(alpha)
+    denom=denominator(alpha)
     denom=lcm(s,denom)
 
     #lower bound and upper bound are the min and max piece sizes
-    lower_bound = alphaa
-    upper__bound = (1 - alphaa)
+    lower_bound = alpha
+    upper__bound = (1 - alpha)
 
     #clear the fractions in the piece size array (B)
     upper_bound_num = upper__bound * denom
     lower_bound_num = lower_bound * denom
-
     #B is the set of possible piece sizes
+    B = collect(lower_bound_num:1:upper_bound_num)
+    B_1 = collect(lower_bound_num:1:x*denom)
+    B_2 = collect(y*denom: upper_bound_num)
     if Endpts !=0
-        B=Endpts
+        B = [Int64(Endpts[1])]
+        for i = 2:length(Endpts)
+            append!(B, Int64(Endpts[i]))
+        end
+    #    B=Endpts
         i = 1
         while Endpts[i] <x*denom
             i=i+1
@@ -55,7 +61,6 @@ function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 
         B = collect(lower_bound_num:1:upper_bound_num)
         B_1 = collect(lower_bound_num:1:x*denom)
         B_2 = collect(y*denom: upper_bound_num)
-
     end
     l_B = length(B)
     #use Mulitset function (in helper_functions) to find
@@ -68,15 +73,15 @@ function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 
     if vec_1 == "time out"
         println("MULTISET 1 TIME OUT:  length(B) = ",length(B),"  sets sum to: ",Int64(denom),"  sets of size: ",2)
         str = @sprintf("MULTISET 2 TIME OUT:  length(B) = %i   sets sum to: %i  sets of size: %i",length(B),Int64(denom),2)
-        return -1,str, time()-time_multi, 0,l_B
+        return -1,str, time()-time_multi, 0,0
     end
     vec_2 = 0
-    if alphaa<1//3
+    if alpha<1//3
         vec_2_1 = Multiset(B,Int64(denom),3,time_limit_multi)
         if vec_2 == "time out"
             println("MULTISET 2 TIME OUT:  length(B) = ",length(B),"  sets sum to: ",Int64(denom),"  sets of size: ",3)
             str = @sprintf("MULTISET 2 TIME OUT:  length(B) = %i   sets sum to: %i  sets of size: %i",length(B),Int64(denom),3)
-            return -1,str, time()-time_multi, 0,l_B
+            return -1,str, time()-time_multi, 0,0
         end
     end
     #Mulitset returns an array of arrays of the possible mulitsets
@@ -89,9 +94,9 @@ function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 
     elseif vec_1 == 0 && vec_2 !=0
         vec_1 = vec_2
     elseif vec_1==0 && vec_2==0
-        return false,0,time()-time_multi, 0,l_B
+        return false,0,time()-time_multi, 0,0
     end
-    if alphaa == 1//3
+    if alpha == 1//3
         push!(vec_1, [denom/3; denom/3; denom/3])
     end
     #display(vec_1)
@@ -146,7 +151,7 @@ function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 
         if vec_1_stu == "time out"
             println("MULTISET 3 TIME OUT:  length(B) = ",length(B),"  sets sum to: ",Int64((m//s)*denom),"  sets of size: ",V)
             str = @sprintf("MULTISET 3 TIME OUT:  length(B) = %i   sets sum to: %i  sets of size: %i",length(B),Int64((m//s)*denom),V)
-            return -1,str, time()-time_multi, 0,l_B
+            return -1,str, time()-time_multi, 0,0
         end
 
     end
@@ -180,7 +185,7 @@ function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 
         if vec_2_stu == "time out"
             println("MULTISET 4 TIME OUT:  length(B) = ",length(B),"  sets sum to: ",Int64((m//s)*denom),"  sets of size: ",V-1)
             str = @sprintf("MULTISET 4 TIME OUT:  length(B) = %i   sets sum to: %i  sets of size: %i",length(B),Int64((m//s)*denom),V-1)
-            return -1,str, time()-time_multi, 0,l_B
+            return -1,str, time()-time_multi, 0,0
         end
     end
 
@@ -204,7 +209,7 @@ function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 
     elseif vec_1_stu == 0 && vec_2_stu!=0
         vec_1_stu = vec_2_stu
     elseif vec_1_stu==0 && vec_2_stu==0
-        return false, 0, time_multi,0,l_B
+        return false, 0, time_multi,0,0
     end
 
 
@@ -295,7 +300,6 @@ function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 
         c[i]=1
     end
     final_mat = [final_mat; a'; b';c']
-
     #set it equal to final_mat_2 (0's then num muff then num students)
     c = zeros(Int64,row_1)
     final_mat_2 = [c;m;sᵥ; sᵥ₋₁]
@@ -362,7 +366,7 @@ function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 
             println("SOLVER TIME OUT  dim(A) = ",size(final_mat))
             row,col = size(final_mat)
             str = @sprintf("SOLVER TIME OUT  dim(A) = (%i, %i) ",row,col)
-            return -1,str, time_multi, time_solver,l_B
+            return -1,str, time_multi, time_solver,col
         end
 
 
@@ -378,7 +382,7 @@ function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 
             println("SOLVER TIME OUT  dim(A) = ",size(final_mat))
             row,col = size(final_mat)
             str = @sprintf("SOLVER TIME OUT  dim(A) = (%i, %i) ",row,col)
-            return -1,str, time_multi, time_solver,l_B
+            return -1,str, time_multi, time_solver,col
         end
         if termination_status(model) != MOI.OPTIMAL
             println("NO SOLUTION")
@@ -440,7 +444,7 @@ function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 
                 ogmat_2[i,j]=mat_2[i,j]
             end
         end
-        poss_sol = Vector{Vector{Int64}}(undef,0)
+        poss_sol = Vector{Vector{Float64}}(undef,0)
         time_solver = time()
         for k = 1:col_1
 
@@ -456,7 +460,8 @@ function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 
             end
             if(termination_status(model)!=MOI.OPTIMAL)
                 println("No procedure found")
-                return false, 0, 0,0,l_B
+                row,col = size(final_mat)
+                return false, 0, 0,0,col
             end
             while termination_status(model) == MOI.OPTIMAL
                 y=value.(x)
@@ -494,8 +499,8 @@ function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 
         for j = 1:length(poss_sol)
             for i=1:col_1
                 if(poss_sol[j][i]!=0)
-                    if abs(poss_sol[i][j] - floor(poss_sol[i][j])) <= eps || abs(poss_sol[i][j]-ceil(poss_sol[i][j]))<=eps
-                        poss_sol[i][j]= round(poss_sol[i][j])
+                    if abs(poss_sol[j][i] - floor(poss_sol[j][i])) <= eps || abs(poss_sol[j][i]-ceil(poss_sol[j][i]))<=eps
+                        poss_sol[j][i]= round(poss_sol[j][i])
                     end
                     print("Cut ",Int64(poss_sol[j][i])," muffins {  ")
 
@@ -511,8 +516,8 @@ function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 
 
             for i=1:col_2
                 if(poss_sol[j][i+col_1]!=0)
-                    if abs(poss_sol[i][j] - floor(poss_sol[i][j])) <= eps || abs(poss_sol[i][j]-ceil(poss_sol[i][j]))<=eps
-                        poss_sol[i][j]= round(poss_sol[i][j])
+                    if abs(poss_sol[j][i+col_1] - floor(poss_sol[j][i+col_1])) <= eps || abs(poss_sol[j][i+col_1]-ceil(poss_sol[j][i+col_1]))<=eps
+                        poss_sol[j][i+col_1]= round(poss_sol[j][i+col_1])
                     end
                     print("Give ",Int64(poss_sol[j][i+col_1])," students {  ")
                     for j=1:row_1
@@ -543,10 +548,11 @@ function VProc(m,s,alphaa, time_limit_solv = 60, time_limit_multi =60, Endpts = 
     if proof >=1
         println("***********************************************")
     end
+    row,col = size(final_mat)
     if(term_status==MOI.OPTIMAL)
-        return true,0, time_multi, time_solver,l_B
+        return true,0, time_multi, time_solver,col
     else
-        return false,0, time_multi, time_solver,l_B
+        return false,0, time_multi, time_solver,col
     end
 end
 #VProc(11,10,7//20,Inf,Inf,0,0)

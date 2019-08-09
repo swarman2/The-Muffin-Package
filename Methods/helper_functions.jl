@@ -125,7 +125,7 @@ function print_Intervals(m,s,alpha,split = true)
         if split
             println("\n\nSPLIT THE ",V," SHARES AGAIN")
             @printf("\n     (  %-3d small %2d-shares  )         (  %-3d %2d-shares    |    %-3d %2d-shares  ) ",num_small_shares, V,Int64(num_large_shares/2), V, Int64(num_large_shares/2), V)
-            @printf("\n    %-22d  %-9d %-19d %-19d %-5d",alpha*denom,ybuddy*denom,xbuddy*denom,denom/2,x*denom)
+            @printf("\n    %-22d  %-9d %-19d %-18.1f %-5d",alpha*denom,ybuddy*denom,xbuddy*denom,denom/2,x*denom)
         end
         println()
         println()
@@ -153,7 +153,7 @@ function print_Intervals(m,s,alpha,split = true)
             println("\n\nSPLIT THE ",V-1," SHARES AGAIN")
 
             @printf("\n     (   %-3d %2d-shares    |    %-3d %2d-shares   )         (  %-3d large %2d-shares  )  ",Int64(num_small_shares/2), V-1,Int64(num_small_shares/2), V-1, num_large_shares, V-1)
-            @printf("\n    %-20d %-20d %-9d %-23d %-5d",y*denom,denom/2,ybuddy*denom,xbuddy*denom,(1-alpha)*denom)
+            @printf("\n    %-20d %-19.1f %-9d %-23d %-5d",y*denom,denom/2,ybuddy*denom,xbuddy*denom,(1-alpha)*denom)
             #println("    (",Int64(num_small_shares/2),"  ",V-1,"-shares | ",Int64(num_small_shares/2),"  ",V-1,"-shares)      ( ",num_large_shares," large ",V-1,"-shares )    ")
             #println("     ", y,"    1/2 ", ybuddy,"          ",xbuddy, "        ",1-alpha)
         end

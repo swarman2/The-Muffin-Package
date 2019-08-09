@@ -2,7 +2,7 @@
 
 function EBM(m::Int64,s::Int64, proof = false)
     #Before each if is a number this number corresponds to the
-    # algorithim under the book heading "The Function EBM" (chapter 10) 
+    # algorithim under the book heading "The Function EBM" (chapter 10)
     #1
     if m%s == 0
       return 1

@@ -1,13 +1,14 @@
 include("Methods/PKG.jl")
 using Printf
 function menu()
-    @printf("\n\n\t MENU: enter 1, 2 or 3")
+    @printf("\n\n\t MENU: enter 1, 2, 3 or 4")
     @printf("\n1. Given m and s what is the largest possible smallest piece")
     @printf("\n2. Given a range of m and s find all largest possible smallest pieces")
-    @printf("\n3. Quit\n")
+    @printf("\n3. See upper-bound information for a given m, s, and optionally alpha")
+    @printf("\n4. Quit\n")
     answer = readline()
-    while !(answer == "1" || answer == "2" || answer =="3" )
-        println("Enter 1, 2 or 3")
+    while !(answer == "1" || answer == "2" || answer =="3" || answer == "4")
+        println("Enter 1, 2,3 or 4")
         answer = readline()
     end
     return answer
@@ -16,9 +17,9 @@ function main()
     @printf("\nWelcome to the Muffin Package ")
     @printf("\nThis package is a tool to solve The Muffin Problem: ")
     @printf("\n\n\t\tYou have m muffins and s students. You want to\n
-\t\tdivide the muffins evenly, but no student wants a\n
-\t\ttiny sliver. What division of muffins maximizes\n
-\t\tthe smallest piece?")
+    \t\tdivide the muffins evenly, but no student wants a\n
+    \t\ttiny sliver. What division of muffins maximizes\n
+    \t\tthe smallest piece?")
     @printf("\n\nNotation used during the program: ")
     @printf("\n\t m : number of muffins")
     @printf("\n\t s : number of students")
@@ -26,7 +27,7 @@ function main()
     println()
     @label start
     answer = menu()
-    while answer != "3"
+    while answer != "4"
         if answer == "1"
             dual = false
             @printf("Enter m: ")
@@ -75,7 +76,11 @@ function main()
                 end
             end
             if s<=0
-                println("Enter s > 0")
+                print("Enter s > 0: ")
+                @goto try_s
+            end
+            if s >= 400
+                print("Enter s < 400: ")
                 @goto try_s
             end
             if m%s == 0
@@ -105,21 +110,6 @@ function main()
                 str_eq = " ≤ "
             end
             str = str *" NONE "
-
-            #@printf("\nf(%i,%i) %s %i/%i | Methods: %s  ", m,s,str_eq, numerator(alpha), denominator(alpha), str)
-            if dual
-                println()
-                println(" \nBy the duality thereom f(",s,",",m,") = ",numerator(s//m*(alpha)),"/",denominator(s//m*(alpha)))
-                println(" Enter method for proof [note it is a proof of f(",m,",",s,")]")
-            else
-                println()
-                @printf("\nEnter which method for proof [%s]: ",str)
-            end
-            method = readline()
-            method = uppercase(method)
-            if method == "Q"
-                @goto start
-            end
             valid_methods = split(str)
             leng = length(valid_methods)
             first_letter = Array{String}(undef,0)
@@ -129,6 +119,22 @@ function main()
                 str_first_letter = str_first_letter *" "* valid_methods[i][1]
             end
             first_letter = split(str_first_letter)
+            #@printf("\nf(%i,%i) %s %i/%i | Methods: %s  ", m,s,str_eq, numerator(alpha), denominator(alpha), str)
+            @label get_method
+            if dual
+                println()
+                println(" \nBy the duality thereom f(",s,",",m,") = ",numerator(s//m*(alpha)),"/",denominator(s//m*(alpha)))
+                println(" Enter method for proof [",str,"] (note it is a proof of f(",m,",",s,"))")
+            else
+                println()
+                @printf("\nEnter which method for proof [%s]: ",str)
+            end
+            method = readline()
+            method = uppercase(method)
+            if method == "Q"
+                @goto start
+            end
+
             while !(method in valid_methods) && !(method in first_letter)
                 println("Enter a method from this list: ",str)
                 method = readline()
@@ -136,6 +142,32 @@ function main()
                 if method == "Q"
                     @goto start
                 end
+            end
+            if method == "H" && "HALF" in valid_methods && "HBM" in valid_methods
+                println("HALF or HBM? or enter 1 to go back to methods")
+                method = readline()
+                if method == "Q" || method == "q"
+                    @goto start
+                end
+                if method == "1"
+                    @goto get_method
+                end
+                method = uppercase(method)
+                while !(method == "HALF" || method == "HBM")
+                    println("Enter HALF or HBM")
+                    method = readline()
+                    if method == "1"
+                        @goto get_method
+                    end
+                    if method == "q" || method == "Q"
+                        @goto start
+                    end
+                    method = uppercase(method)
+                end
+            elseif method == "H" && "HALF" in valid_methods
+                method = "HALF"
+            elseif method == "H" && "HBM" in valid_methods
+                method = "HBM"
             end
             if method != "NONE"
                 print_proof(method,m,s,alpha)
@@ -153,7 +185,18 @@ function main()
                 end
                 if see_proc == "1"
                     if alpha != 1//3
-                        VProc(m,s,alpha,900,900,0,1)
+                        if "GAP" in valid_methods
+                            GAP_alpha, GAP_endpoints = GAP(m,s,alpha, true)
+                            unique!(GAP_endpoints)
+                            proc_bool, err_mess, t_multi, t_solv, length_B = VProc(m,s,alpha, 1000,1000, GAP_endpoints,1)
+                        elseif "MID" in valid_methods
+                            MID_alpha, MID_endpoints = MID(m,s, alpha, true)
+                            unique!(MID_endpoints)
+                            proc_bool, err_mess, t_multi, t_solv, length_B = VProc(m,s,alpha, 1000,1000, MID_endpoints,1)
+
+                        else
+                            VProc(m,s,alpha,900,900,0,1)
+                        end
                     else
                         one_thrd(m,s,1)
                     end
@@ -161,6 +204,8 @@ function main()
             end
         end
         if answer == "2"
+            fileKey = rand(1000:9999)
+
             println()
             @printf("Enter max m: ")
             @label enter_m
@@ -268,6 +313,7 @@ function main()
             scott_data = false
             bool_graph = false
             m_le_s2 = false
+            stop_at_first = false
             time_limit = 1000
             while response != "0"
                 println()
@@ -276,34 +322,51 @@ function main()
                 println("-----------Options------------|--------In Use ---------------")
                 @printf("%-31s [1] %3d ≤ s ≤ %-3d   s < m ≤ %-4d  "," ",min_s, max_s, m)
                 println()
-                if bool_csv
-                    @printf("%-32s"," ")
-                end
-                @printf("[2] Store in csv file")
-                println()
+            #    if bool_csv
+            #        @printf("%-32s"," ")
+            #    end
+            #    @printf("[2] Store in csv file")
+            #    if bool_csv
+            #        @printf(" (run key = %i)",fileKey)
+            #    end
+            #    println()
                 if bool_txt
                     @printf("%-32s"," ")
                 end
-                @printf("[3] Store in txt file")
+                @printf("[2] Store in txt file")
+                if bool_txt
+                    @printf(" (run key = %i)",fileKey)
+                end
                 println()
+
                 if scott_data
-                    @printf("%-31s %s","[4] Use PROC to verify","[3] Use SCOTT to verify")
+                    @printf("%-31s %s","[3] Use PROC to verify","[3] Use SCOTT to verify")
                 else
-                    @printf("%-31s %s","[4] Use SCOTT to verify","[3] Use PROC to verify")
+                    @printf("%-31s %s","[3] Use SCOTT to verify","[3] Use PROC to verify")
                 end
                 println()
-                if bool_graph
-                    @printf("%-32s"," ")
-                end
-                @printf("[5] Have graphs")
-                println()
-                @printf("%-31s %s %i sec"," ","[6] Time Limit = ",time_limit)
+                #if bool_graph
+                #    @printf("%-32s"," ")
+                #end
+                #@printf("[5] Have graphs")
+                #if bool_graph
+                #    @printf(" (run key = %i)",fileKey)
+                #end
+                #println()
+
+                @printf("%-31s %s %i sec"," ","[4] Time Limit = ",time_limit)
                 println()
                 if m_le_s2
                     @printf("%-32s"," ")
                 end
-                @printf("[7] m ≤ s squared")
+                @printf("[5] m ≤ s squared")
                 println()
+                if stop_at_first
+                    @printf("%-32s"," ")
+                end
+                @printf("[6] stop when one method works")
+                println()
+
                 response = readline()
 
                 if response == "q" || response == "Q"
@@ -412,19 +475,13 @@ function main()
                     end
                     println()
                 end
-                if "2" in r_arr
-                    bool_csv = !bool_csv
-                end
-                if  "3" in r_arr
+                if  "2" in r_arr
                     bool_txt = !bool_txt
                 end
-                if "4" in r_arr
+                if "3" in r_arr
                     scott_data = !scott_data
                 end
-                if "5" in r_arr
-                    bool_graph = !bool_graph
-                end
-                if "6" in r_arr
+                if "4" in r_arr
 
                     println("Enter a new time limit in seconds: ")
                     @label enter_time
@@ -447,8 +504,11 @@ function main()
                         @goto enter_time
                     end
                 end
-                if "7" in r_arr
+                if "5" in r_arr
                     m_le_s2 = !m_le_s2
+                end
+                if "6" in r_arr
+                    stop_at_first = !stop_at_first
                 end
                 println("\n\n\n\n")
             end
@@ -529,19 +589,285 @@ function main()
                 scott_data = (verify_type == "scott" || verify_type == "s")
             end
 
-            fileKey = rand(1000:9999)
 
-    #        try
                 println()
-                FIND_ALL(m, min_s, max_s,fileKey, bool_txt, scott_data, bool_csv, bool_graph, time_limit, m_le_s2 )
-
-    #       catch
-    #            println()
-    #            println("Sorry something went wrong")
-    #            println()
-    #        end
-
+                FIND_ALL(m, min_s, max_s,fileKey, bool_txt, scott_data, bool_csv, bool_graph, time_limit, m_le_s2, stop_at_first )
         end
+        if answer == "3"
+            @printf("Enter m: ")
+            @label tryAgain
+            m = readline()
+            if m == "q" || m == "Q"
+                @goto start
+            end
+            while true
+                try
+                    m = parse(Int64,m)
+                    break;
+                catch
+                    @printf("Enter an integer for m: ")
+                    m=readline()
+                    if m == "q" || m =="Q"
+                        @goto start
+                    end
+                end
+            end
+            if m<=1
+                println("Enter m > 1")
+                @goto tryAgain
+            end
+            if m>=400
+                println("Enter m < 400")
+                @goto tryAgain
+            end
+            #m=parse(Int64, m)
+            @printf("Enter s: ")
+            @label tryS
+            s = readline()
+            if s == "q" || s =="Q"
+                @goto start
+            end
+            while true
+                 try
+                    s = parse(Int64,s)
+                    break;
+                catch
+                    @printf("Enter an integer for s: ")
+                    s=readline()
+                    if s == "q" || s =="Q"
+                        @goto start
+                    end
+                end
+            end
+            if s<=0
+                print("Enter s > 0: ")
+                @goto tryS
+            end
+            if s >= 400
+                print("Enter s < 400: ")
+                @goto tryS
+            end
+            if m <= s
+                print("Enter m > s: ")
+                @goto tryS
+            end
+            if m%s == 0
+                println()
+                println(" m is divisible by s, you can probably do that yourself, try again")
+                print("Enter m: ")
+                @goto tryAgain
+            end
+            @printf("Enter alpha [x/y] or 0: ")
+            @label get_al
+            al = readline()
+            if al == "q" || al =="Q"
+                @goto start
+            end
+            alpha = 0
+            if al != "0"
+                while true
+                    al_ar = split(al,"/")
+                     try
+                        n = parse(Int64,al_ar[1])
+                        d = parse(Int64,al_ar[2])
+                        alpha = n//d
+                        break;
+                    catch
+                        @printf("Enter an integer/integer: ")
+                        al=readline()
+                        if al == "q" || al =="Q"
+                            @goto start
+                        end
+                    end
+                end
+
+                if alpha <= 0 || alpha >=1//2
+                    println("Enter alpha between 0 and 1/2: ")
+                    @goto get_al
+                end
+            end
+
+            V,sᵥ,sᵥ₋₁=SV(m,s)
+            Vshares=V*sᵥ
+            V₋₁shares=(V-1)*sᵥ₋₁
+            println()
+            println()
+            println("    There are ",V,"-students and ",V-1,"-students")
+            println("    There are ",sᵥ," ",V,"-students and ",sᵥ₋₁," ",V-1,"-students")
+            println()
+            println("----------- Please wait while the methods run -----------")
+            if al != "0"
+               FC_alpha = FC(m,s)
+               INT_bool = VINT(m,s,alpha)
+               INT_alpha = INT(m,s)
+               HALF_bool = VHALF(m,s,alpha)
+               HALF_alpha = HALF(m,s)
+               EBM_alpha = EBM(m,s)
+               HBM_alpha = HBM(m,s)
+               MID_bool = VMID(m,s,alpha)
+               MID_alpha = MID(m,s)
+               GAP_bool = VGAP(m,s,alpha)
+               GAP_alpha = GAP(m,s)
+               TRAIN_bool = VTRAIN(m,s,alpha)
+               TRAIN_alpha = TRAIN(m,s)
+               println("  -----  | --- f(",m,", ",s,") ≤ ",al,"----  | --- best upper-bound for f(",m,", ",s,") ---")
+               @printf("\n    FC   |           %5s          |          %i/%i       ",FC_alpha == alpha,numerator(FC_alpha),denominator(FC_alpha))
+               @printf("\n   INT   |           %5s          |          %i/%i      ",INT_bool,numerator(INT_alpha),denominator(INT_alpha))
+               @printf("\n  HALF   |           %5s          |          %i/%i        ",HALF_bool,numerator(HALF_alpha),denominator(HALF_alpha))
+               @printf("\n   EBM   |           %5s          |          %i/%i       ",EBM_alpha == alpha,numerator(EBM_alpha),denominator(EBM_alpha))
+               @printf("\n   HBM   |           %5s          |          %i/%i       ",HBM_alpha == alpha,numerator(HBM_alpha),denominator(HBM_alpha))
+               @printf("\n   MID   |           %5s          |          %i/%i       ",MID_bool,numerator(MID_alpha),denominator(MID_alpha))
+               @printf("\n   GAP   |           %5s          |          %i/%i       ",GAP_bool,numerator(GAP_alpha),denominator(GAP_alpha))
+               @printf("\n TRAIN   |           %5s          |          %i/%i       ",TRAIN_bool,numerator(TRAIN_alpha),denominator(TRAIN_alpha))
+               println()
+                @label valid_al
+                print_Intervals(m,s,alpha,true)
+                while(true)
+                    @label get_method2
+                    println("  Enter a method to see it's proof or 'none' to go back to menu [FC INT HALF EBM HBM MID GAP TRAIN NONE] ")
+                    method = readline()
+                    method = uppercase(method)
+                    if method == "Q"
+                        @goto start
+                    end
+                    first_letter = ["F","I","H","E","M","G","T","N"]
+                    valid_methods = ["FC", "INT", "HALF", "EBM", "HBM", "MID", "GAP", "TRAIN", "NONE"]
+                    while !(method in valid_methods)&& !(method in first_letter)
+                        println("Enter a method from this list: FC INT HALF EBM HBM MID GAP TRAIN NONE")
+                        method = readline()
+                        method = uppercase(method)
+                        if method == "Q"
+                            @goto start
+                        end
+                    end
+                    if method == "H" && "HALF" in valid_methods && "HBM" in valid_methods
+                        println("HALF or HBM? or enter 1 to go back to methods")
+                        method = readline()
+                        if method == "Q"
+                            @goto start
+                        end
+                        if method == "1"
+                            @goto get_method2
+                        end
+                        method = uppercase(method)
+                        while !(method == "HALF" || method == "HBM")
+                            println("Enter HALF, HBM or enter 1 to go back to methods")
+                            method = readline()
+                            if method == "Q"
+                                @goto start
+                            end
+                            if method == "1"
+                                @goto get_method2
+                            end
+                            if method == "q" || method == "Q"
+                                @goto start
+                            end
+                            method = uppercase(method)
+                        end
+                    elseif method == "H" && "HALF" in valid_methods
+                        method = "HALF"
+                    elseif method == "H" && "HBM" in valid_methods
+                        method = "HBM"
+                    end
+                    if method == "NONE" || method == "N"
+                        break
+                    end
+                    print_proof(method,m,s,alpha)
+                end
+            else
+                FC_alpha = FC(m,s)
+                INT_alpha = INT(m,s)
+                HALF_alpha = HALF(m,s)
+                EBM_alpha = EBM(m,s)
+                HBM_alpha = HBM(m,s)
+                MID_alpha = MID(m,s)
+                GAP_alpha = GAP(m,s)
+                TRAIN_alpha = TRAIN(m,s)
+                println("  ----- | --- best upper-bound for f(",m,", ",s,") ---")
+                @printf("    FC  |          %i/%i       ",numerator(FC_alpha),denominator(FC_alpha))
+                @printf("\n   INT  |          %i/%i      ",numerator(INT_alpha),denominator(INT_alpha))
+                @printf("\n  HALF  |          %i/%i        ",numerator(HALF_alpha),denominator(HALF_alpha))
+                @printf("\n   EBM  |          %i/%i       ",numerator(EBM_alpha),denominator(EBM_alpha))
+                @printf("\n   HBM  |          %i/%i       ",numerator(HBM_alpha),denominator(HBM_alpha))
+                @printf("\n   MID  |          %i/%i       ",numerator(MID_alpha),denominator(MID_alpha))
+                @printf("\n   GAP  |          %i/%i       ",numerator(GAP_alpha),denominator(GAP_alpha))
+                @printf("\n TRAIN  |          %i/%i       ",numerator(TRAIN_alpha),denominator(TRAIN_alpha))
+                println()
+                println()
+                while(true)
+                    @label get_method3
+                    println("  Enter a method to see it's proof or 'none' to go back to menu [FC INT HALF EBM HBM MID GAP TRAIN NONE] ")
+                    method = readline()
+                    method = uppercase(method)
+                    if method == "Q"
+                        @goto start
+                    end
+                    first_letter = ["F","I","H","E","M","G","T","N"]
+                    valid_methods = ["FC", "INT", "HALF", "EBM", "HBM", "MID", "GAP", "TRAIN", "NONE"]
+                    while !(method in valid_methods)&& !(method in first_letter)
+                        println("Enter a method from this list: FC INT HALF EBM HBM MID GAP TRAIN NONE")
+                        method = readline()
+                        method = uppercase(method)
+                        if method == "Q"
+                            @goto start
+                        end
+                    end
+                    if method == "H" && "HALF" in valid_methods && "HBM" in valid_methods
+                        println("HALF or HBM? or enter 1 to go back to methods")
+                        method = readline()
+                        if method == "Q"
+                            @goto start
+                        end
+                        if method == "1"
+                            @goto get_method3
+                        end
+                        method = uppercase(method)
+                        while !(method == "HALF" || method == "HBM")
+                            println("Enter HALF or HBM")
+                            method = readline()
+                            if method == "Q"
+                                @goto start
+                            end
+                            if method == "1"
+                                @goto get_method3
+                            end
+                            if method == "q" || method == "Q"
+                                @goto start
+                            end
+                            method = uppercase(method)
+                        end
+                    elseif method == "H" && "HALF" in valid_methods
+                        method = "HALF"
+                    elseif method == "H" && "HBM" in valid_methods
+                        method = "HBM"
+                    end
+                    if method == "NONE" || method == "N"
+                        break
+                    end
+
+                    if method == "FC" || method == "F"
+                        alpha = FC_alpha
+                    elseif method == "INT" || method == "I"
+                         alpha = INT_alpha
+                    elseif method == "HALF"
+                         alpha = HALF_alpha
+                    elseif method ==  "MID" || method == "M"
+                         alpha =MID_alpha
+                    elseif method ==  "EBM" ||method ==  "E"
+                         alpha = EBM_alpha
+                    elseif method ==  "HBM"
+                        alpha = HBM_alpha
+                    elseif method ==  "TRAIN" ||method ==  "T"
+                         alpha = TRAIN_alpha
+                    elseif method ==  "GAP" ||method ==  "G"
+                        alpha = GAP_alpha
+                    end
+                    print_proof(method,m,s,alpha)
+                end
+            end
+        end
+            println()
+
         answer=menu()
     end
 end

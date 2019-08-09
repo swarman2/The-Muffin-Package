@@ -2,9 +2,22 @@
 include("helper_functions.jl")
 using JuMP
 using Cbc
+"""
+VMID verifies
 
-#VMID takes m,s,alpha and if proof is true prints a proof
-#ret_endpts is used in PKG to pass the MID endpoints to PROC (speeds up Mulitsets)
+INPUTS:
+ * m -> number of muffins
+ * s -> number of students
+ * alpha -> α
+ * proof -> boolean:
+   (0 - No Proof)
+   (1 - Print Proof)
+ * ret_endpts -> used in PKG to pass the MID endpoints to PROC (speeds up Mulitsets)
+
+OUTPUTS:
+ *
+ * Print proof (Depending on input (proof))
+ """
 function VMID(m,s,alpha,proof = false, ret_endpts =false)
     #setup with some information
     V,sᵥ,sᵥ₋₁=SV(m,s)
@@ -15,6 +28,12 @@ function VMID(m,s,alpha,proof = false, ret_endpts =false)
     ybuddy = 1-y
     denom=denominator(alpha)
     denom=lcm(s,denom)
+    #if x == alpha || y == (1-alpha)
+    #    if proof
+    #        println("Weird intervals")
+    #    end
+    #    return false, 0
+    #end
 
     #if the intervals are not disjoint return false
     if x > y
@@ -65,17 +84,22 @@ function VMID(m,s,alpha,proof = false, ret_endpts =false)
     #find possible permutations
     X = perm(VV, numIntervals)
     possInd = Array{Int64}(undef,0)
-
     #find possible students
     for i=1:length(X)
         A=X[i]
         sum_1=0
         sum_2=0
+        equal = true
         for j =1:numIntervals
             sum_1=sum_1+A[j]*endpoints[j,1]
             sum_2=sum_2+A[j]*endpoints[j,2]
+            if A[j]!=0 && endpoints[j,1]!=endpoints[j,2]
+                equal=false
+            end
         end
-        if (sum_1 < m//s) && (sum_2 > m//s)
+        if !equal && sum_1 < (m//s) && (sum_2 > (m//s))
+            append!(possInd, i)
+        elseif equal && (sum_1 <= (m//s)) && (sum_2 >= (m//s))
             append!(possInd, i)
         end
     end
@@ -83,7 +107,7 @@ function VMID(m,s,alpha,proof = false, ret_endpts =false)
     #if there are no possible distrubtions return false
     if length(possInd)==0
         if proof
-            println("No possible muffin distributions")
+            println("No possible types of studetns")
             println("alpha ≤ ",alpha)
         end
         if ret_endpts
@@ -170,7 +194,7 @@ function VMID(m,s,alpha,proof = false, ret_endpts =false)
     end
     if proof
         println("No solution on the Naturals")
-        println("alpha ≤ ",numerator(alpha),"/",denominator(alpha))
+        println("f(",m,", ",s,") ≤ ",numerator(alpha),"/",denominator(alpha))
     end
     if ret_endpts
         endpoints = collect(alpha*denom:1:(1-alpha)*denom)
@@ -185,6 +209,20 @@ function VMID(m,s,alpha,proof = false, ret_endpts =false)
     end
     return true
 end
+"""
+MID is the Interval Method
+
+INPUTS:
+ * m -> number of muffins
+ * s -> number of students
+ * min_al -> 1//2
+ * ret_endpts = boolean:
+   (0 - No Proof)
+   (1 - Print Proof)
+
+OUTPUTS:
+ * α
+ """
 function MID(m,s,min_al=1//2, ret_endpts = false)
     if m%s==0
         return 1,1
@@ -192,6 +230,7 @@ function MID(m,s,min_al=1//2, ret_endpts = false)
     array=Array{Rational}(undef,0)
     #Find all numbers between 1/3 and 1/2 with denominator a multiple of s < m*s
     alph = 1//3
+    append!(array,alph)
     num=1
     denom=3
     while denom<=m*s
@@ -214,9 +253,11 @@ function MID(m,s,min_al=1//2, ret_endpts = false)
     if alpha == 1
         return 1,1
     end
-    if ret_endpts
+    if ret_endpts && endpoints !=0
         endpoints = filter(x-> x!= 1//2, endpoints)
         return alpha, endpoints
+    elseif ret_endpts
+        return alpha,1
     else
         return alpha
     end

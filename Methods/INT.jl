@@ -11,6 +11,13 @@ function VINT(m,s,alpha, proof = false)
  Vshares=V*sᵥ
  V₋₁shares=(V-1)*sᵥ₋₁
  x,y=FINDEND(m,s,alpha,V)
+ if x > y
+     if proof
+         println("Intervals not disjoint")
+     end
+     return false, 0
+ end
+
  xbuddy = 1-x
  ybuddy = 1-y
 
@@ -67,10 +74,10 @@ function VINT(m,s,alpha, proof = false)
          println("Need at least ",minLg, " large shares")
        end
        if(minSm*sᵥ>num_small_shares)
-         println(sᵥ," students need at least ", minSm, " small shares, but there are only ", num_small_shares, " small shares, so alpha ≤ ", numerator(alpha),"/",denominator(alpha))
+         println(sᵥ," students need at least ", minSm, " small shares, but there are only ", num_small_shares, " small shares, so f(",m,", ",s,")  ≤ ", numerator(alpha),"/",denominator(alpha))
        end
        if(minLg*sᵥ>num_large_shares)
-         println(sᵥ," students need at least ", minLg, " large shares, but there are only ", num_large_shares, " large shares, so alpha ≤ ", numerator(alpha),"/",denominator(alpha))
+         println(sᵥ," students need at least ", minLg, " large shares, but there are only ", num_large_shares, " large shares, so f(",m,", ",s,")  ≤ ", numerator(alpha),"/",denominator(alpha))
        end
      end
      if(minSm*sᵥ>num_small_shares)
@@ -120,10 +127,10 @@ function VINT(m,s,alpha, proof = false)
        println("Need at least ",minLg, " large shares")
      end
      if(minSm*sᵥ₋₁>num_small_shares)
-       println(sᵥ₋₁," students need at least ", minSm, " small shares, but there are only ", num_small_shares, " small shares, so alpha ≤ ", numerator(alpha),"/",denominator(alpha))
+       println(sᵥ₋₁," students need at least ", minSm, " small shares, but there are only ", num_small_shares, " small shares, so f(",m,", ",s,") ≤ ", numerator(alpha),"/",denominator(alpha))
      end
      if(minLg*sᵥ₋₁>num_large_shares)
-      println(sᵥ₋₁," students need at least ", minLg, " large shares, but there are only ", num_large_shares, " large shares, so alpha ≤ ", numerator(alpha),"/",denominator(alpha))
+      println(sᵥ₋₁," students need at least ", minLg, " large shares, but there are only ", num_large_shares, " large shares, so f(",m,", ",s,")  ≤ ", numerator(alpha),"/",denominator(alpha))
      end
    end
    if(minSm*sᵥ₋₁>num_small_shares)

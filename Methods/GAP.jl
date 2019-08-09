@@ -1,7 +1,15 @@
 include("helper_functions.jl")
 using JuMP
 using Cbc
+#input
 #if proof = 1 prints proof, if proof =2 prints proof with matrix
+#if ret_endpts = true it returns the endpoints
+#m,s,alpha (muffins, students, alpha)
+
+#output
+# bool , endpts
+# true if GAP can show upperbound false if it can't
+# endpts = matrix or 0 if no endpts
 function VGAP(m,s,alpha, proof=0, ret_endpts = false)
     V,sᵥ,sᵥ₋₁=SV(m,s)
     Vshares=V*sᵥ
@@ -9,7 +17,12 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
     x,y=FINDEND(m,s,alpha,V)
     ybuddy=1-y
     xbuddy=1-x
-
+    #if x == alpha || y == (1-alpha)
+    #    if proof >=1
+    #        println("Weird intervals")
+    #    end
+    #    return true, 0
+    #end
     denom=denominator(alpha)
     denom=lcm(s,denom)
 
@@ -66,7 +79,7 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
         endpoints=convert_Int(endpoints)
         display(endpoints)
     end
-    if x>=y
+    if x>y
         if proof ==1 || proof ==2
             println("INVALID INTERVALS")
         end
@@ -167,8 +180,8 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
     end
 
     if proof ==1 || proof ==2
-        if V == 3
-            print("and m/2s (",(denom*m/(2s)),")")
+        if V == 3 && !((denom*m/2s) in endpoints)
+            print("  Split m/2s (",(denom*m/(2s)),")")
         end
         println()
     end
@@ -179,10 +192,12 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
     #lets say we split at x, we make x its own interval
     #when we buddy match we have to make m/s - x its own interval
     if V==3
-        endpoints = [endpoints; [(m*denom//2s) (m*denom//2s)];[(m*denom//2s) (m*denom//2s)]]
-        endpoints=sort(collect(Iterators.flatten(endpoints)))
-        endpoints=reshape(endpoints,(2,Int64(length(endpoints)/2)))
-        endpoints = transpose(endpoints)
+        if  !((denom*m/2s) in endpoints)
+            endpoints = [endpoints; [(m*denom//2s) (m*denom//2s)];[(m*denom//2s) (m*denom//2s)]]
+            endpoints=sort(collect(Iterators.flatten(endpoints)))
+            endpoints=reshape(endpoints,(2,Int64(length(endpoints)/2)))
+            endpoints = transpose(endpoints)
+        end
         if proof == 1 || proof == 2
         #    println("\nSPLIT AT m//2s (",Int64(denom*m//2s),")")
             endpoints = convert_Int(endpoints)
@@ -236,7 +251,7 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
                 end
                 if matchIn_1 == false && matchIn_2 == false && (m//s)*denom-upper >= endpoints[1,1] && (m//s)*denom-lower <= endpoints[row,col]
                     if proof ==1 || proof ==2
-                        println("[",Int64((m//s)*denom-upper),"  ",Int64((m//s)*denom-lower),"] by matching [",Int64(lower),"  ",Int64(upper),"]")
+                        println("[",Float64((m//s)*denom-upper),"  ",Float64((m//s)*denom-lower),"] by matching [",Float64(lower),"  ",Float64(upper),"]")
                     end
                     endpoints=[endpoints; [((m//s)*denom-upper) ((m//s)*denom-lower)];  [((m//s)*denom-upper) ((m//s)*denom-lower)]]
                     i=1
@@ -275,17 +290,17 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
             println("\n",V," intervals")
             for j=1:numVIntervals
                 if endpoints[j,1]==endpoints[j,2]
-                    println("J_",j,": [",endpoints[j,1],", ",endpoints[j,2],"]")
+                    println("I_",j,": [",endpoints[j,1],", ",endpoints[j,2],"]")
                 else
-                    println("J_",j,": (",endpoints[j,1],", ",endpoints[j,2],")")
+                    println("I_",j,": (",endpoints[j,1],", ",endpoints[j,2],")")
                 end
             end
             println("\n",V-1," intervals")
             for j=numVIntervals+1: row
                 if endpoints[j,1]==endpoints[j,2]
-                    println("I_",j-numVIntervals,": [",endpoints[j,1],", ",endpoints[j,2],"]")
+                    println("J_",j-numVIntervals,": [",endpoints[j,1],", ",endpoints[j,2],"]")
                 else
-                    println("I_",j-numVIntervals,": (",endpoints[j,1],", ",endpoints[j,2],")")
+                    println("J_",j-numVIntervals,": (",endpoints[j,1],", ",endpoints[j,2],")")
                 end
             end
         end
@@ -436,17 +451,60 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
         end
     end
     if proof>=1
+        row, col= size(endpoints)
+        numIntervals = row
+        numVIntervals = 0
+        for i =1: row
+            if endpoints[i,2]<=x*denom
+                numVIntervals = numVIntervals+1
+            end
+        end
         println("\nSYMMETRIC INTERVALS")
-        display(symmIntervals)
+        row,col = size(symmIntervals)
+        for i = 1:row
+            a = symmIntervals[i,1]
+            b = symmIntervals[i,2]
+            if a > numVIntervals && b > numVIntervals
+                println(" J_",a-numVIntervals," = J_",b-numVIntervals)
+            elseif b > numVIntervals
+                println(" I_",a," = J_",b-numVIntervals)
+            elseif a > numVIntervals
+                println(" J_",a-numVIntervals," = I_",b)
+            else
+                println(" I_",a," = I_",b)
+            end
+        end
+
+        #display(symmIntervals)
+    end
+    if length(symmIntervals)==0
+        if proof>=1
+            println("No symmetric intervals")
+            println("f(",m,", ",s,")  ≤ ",numerator(alpha),"/",denominator(alpha))
+        end
+        if ret_endpts
+            #denom = denom/2
+            B = collect(alpha*denom:1:(1-alpha)*denom)
+
+
+            row_e, col_e = size(Endpoints)
+            while row_e -1 > 0
+                B=filter(x-> x<=Endpoints[row_e-1,2]|| x>=Endpoints[row_e,1],B)
+                row_e = row_e-1
+            end
+            #display(B)
+            return true, B
+        end
+        return true
     end
     row_symm, col_symm = size(symmIntervals)
     if proof==1 || proof ==2
-        println("\nPossible distributions of students for the ",V," shares:")
+        println("\nPossible ",V," students:")
         for i=1:length(possV)
             PRINT(possV[i])
             println()
         end
-        println("\nPossible distributions of students for the ",V-1," shares:")
+        println("\nPossible ",V-1," students:")
         for i=1:length(possV_)
             PRINT(possV_[i])
             println()
@@ -456,7 +514,7 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
     #for both the V and the V-1 shares
     if length(mat_V)==0
         if proof==1 || proof ==2
-            println("\nNo possible distributions of ",V," shares: alpha ≤ ",alpha)
+            println("\nNo possible distributions of ",V," shares: f(",m,", ",s,")  ≤ ",alpha)
         end
         if ret_endpts
             B = collect(alpha*denom:1:(1-alpha)*denom)
@@ -474,12 +532,12 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
                 i = i+1
             end
             B= B/2
-            return false, B
+            return true, B
         end
         return true
     elseif length(mat_V_)==0
         if proof ==1 || proof ==2
-            println("\nNo possible distributions of ",V-1," shares: alpha ≤ ",alpha)
+            println("\nNo possible distributions of ",V-1," shares: f(",m,", ",s,")  ≤ ",alpha)
         end
         if ret_endpts
             #denom = denom/2
@@ -496,7 +554,6 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
         end
         return true
     end
-
     #make the two matricies the same size
     #so we can form them into one system of eqns
     row_mat,col_mat = size(mat_V)
@@ -526,7 +583,10 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
     for i=1:row_symm
         append!(A, (poss_Dist[:,symmIntervals[i,1]]-poss_Dist[:,symmIntervals[i,2]]))
     end
+
     A=reshape(A,Int64(length(A)/row_symm),row_symm)
+
+
     A=transpose(A)
     #A is now a matrix with rows correspoding to the symmetric identities
     #ex if the intervals are I1, I2, I3, I4, I5 (|I1|=|I4|,|I2|=|I3|)
@@ -653,7 +713,7 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
     if(termination_status(model)==MOI.OPTIMAL)
         if proof == 1 || proof ==2
             display(value.(X))
-            println("\nThere is a solution on the naturals, alpha > ",numerator(alpha),"/",denominator(alpha))
+            println("\nThere is a solution on the naturals, f(",m,", ",s,")  > ",numerator(alpha),"/",denominator(alpha))
         end
         if ret_endpts
             #denom = denom/2
@@ -670,7 +730,7 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
         return false
     else
         if proof ==1 || proof ==2
-            println("\nThere is no solution on the naturals, alpha ≤ ",numerator(alpha),"/",denominator(alpha))
+            println("\nThere is no solution on the naturals, f(",m,", ",s,")  ≤ ",numerator(alpha),"/",denominator(alpha))
         end
         if ret_endpts
             #denom = denom/2
@@ -688,10 +748,22 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
     end
 end
 
+#Input
+#possible distribution matrix
+#front and back determine what rows in endpts to refer to
+#endpoints is a matrix of known endpoints
+#m,s (muffins, students)
+#denom is denominator your working with
+#proof = 1 or 2 if you want a proof printed
+#gap_exteded = false if you don't want to include extending gaps TODO this can probably be removed we always consider it
+
+#output
+# newendpoints, _gap
+# returns a matrix which includes any new gaps, and a bool which is true if a gap was found false otherwise
 function findGaps(possDist,front,back,endpoints,m,s,denom,proof = 0, gap_extended=true)
     #find gaps
     _gap=false
-#    println("NEW CALL")
+    #    println("NEW CALL")
     numDistributions, numIntervals = size(possDist)
     #we will use endpoints throughout and don't want it to change while working with it
     newendpoints=endpoints
@@ -880,7 +952,7 @@ function findGaps(possDist,front,back,endpoints,m,s,denom,proof = 0, gap_extende
                 if proof == 1 || proof ==2
                     k=1
                     for i=1:numDistributions
-                        if(possDist[i,j]!=0)
+                        if(possDist[i,j-front+1]!=0)
                             print(lowEnd[k]," ≤ ")
                             PRINT(possDist[i,:])
                             println(" ≤ ",highEnd[k])
@@ -899,6 +971,11 @@ return newendpoints, _gap
 
 end
 
+#input
+#a matrix of endpoints, V (to determine to buddy or not), y, to determine if in 2 shares
+#m,s,denom and proof are as before
+
+#output a matrix which includes any new endpoints
 function buddymatch(endpoints, V,y,m,s,denom,proof = 0)
     row,col=size(endpoints)
     i=1
@@ -923,7 +1000,7 @@ function buddymatch(endpoints, V,y,m,s,denom,proof = 0)
         end
         if buddyIn_1 == false && buddyIn_2 == false && denom-upper >=endpoints[1,1] && denom-lower <= endpoints[row,col]
             if proof ==1 || proof ==2
-                println("[",Int64(denom-upper),"  ",Int64(denom-lower),"] by buddying [",Int64(lower),"  ",Int64(upper),"]")
+                println("[",Float64(denom-upper),"  ",Float64(denom-lower),"] by buddying [",Float64(lower),"  ",Float64(upper),"]")
             end
             endpoints=[endpoints; [(denom-upper) (denom-lower)]]
             i=1
@@ -948,7 +1025,7 @@ function buddymatch(endpoints, V,y,m,s,denom,proof = 0)
             end
             if matchIn_1 == false && matchIn_2 == false && (m//s)*denom-upper >= endpoints[1,1] && (m//s)*denom-lower <= endpoints[row,col]
                 if proof ==1 || proof ==2
-                    println("[",Int64((m//s)*denom-upper),"  ",Int64((m//s)*denom-lower),"] by matching [",Int64(lower),"  ",Int64(upper),"]")
+                    println("[",Float64((m//s)*denom-upper),"  ",Float64((m//s)*denom-lower),"] by matching [",Float64(lower),"  ",Float64(upper),"]")
                 end
                 endpoints=[endpoints; [((m//s)*denom-upper) ((m//s)*denom-lower)]]
                 i=1
@@ -992,13 +1069,21 @@ function convert_Int(matrix)
     return mat
 end
 
+#input
+#m,s (muffins, students) min_al current best upper bound
+#ret_endpts = true if you want endpoints back
 
+#output alpha, endpoints (if ret_endpts  = true)
 function GAP(m,s,min_al = 1//2, ret_endpts = false)
     if m%s==0
         return 1,1
     end
+    if min_al >1//2
+        min_al = 1//2
+    end
     array=Array{Rational}(undef,0)
     alph = 1//3
+    append!(array,alph)
     num=1
     denom=3
     while denom<=m*s
@@ -1016,7 +1101,16 @@ function GAP(m,s,min_al = 1//2, ret_endpts = false)
     end
     sort!(array)
     unique!(array)
+    filter!(x -> 1/3 <= x , array)
+    #println(array)
+    #filter!(x ->  x <min_al, array)
 
+    for i = 1:length(array)
+        if array[i]==49//144
+        #    println(i)
+        end
+    end
+#    println(array)
     alpha, endpoints = binarySearchGAP(m,s,array)
     if alpha == 1
         return alpha,1
@@ -1025,12 +1119,16 @@ function GAP(m,s,min_al = 1//2, ret_endpts = false)
         #endpoints=sort(collect(Iterators.flatten(endpoints)))
         temp=Array{Int64}(undef,0)
         for i = 1:length(endpoints)
-            append!(temp,convert(Int64,endpoints[i]))
+            try
+                append!(temp,convert(Int64,endpoints[i]))
+            catch
+
+            end
         end
         endpoints = temp
         return alpha, endpoints
     elseif ret_endpts
-        return alpha,0
+        return alpha,1
     else
         return alpha
     end
@@ -1070,7 +1168,3 @@ function pGap(m,s,alpha)
     x=GAP(m,s)
     println("f(",m,",",s,")    ",x==alpha,"   ",x)
 end
-#VGAP(54,47,16//47,1)
-#VGAP(31,19,54//133,1)
-#VGAP(778,61,20408//41663,1)
-#GAP(778,61)

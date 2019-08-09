@@ -10,8 +10,17 @@ function VTRAIN(m,s,alpha, proof = 0)
     x,y=FINDEND(m,s,alpha,V)
     if x>y
     #    print("                                                         intervals not disjoint")
+        if proof >=1
+            println("Intervals not disjoint, alpha could be > ",alpha)
+        end
         return false
     end
+    #if x == alpha || y == (1-alpha)
+    #    if proof>=1
+    #        println("Weird intervals")
+    #    end
+    #    return false, 1
+    #end
     ybuddy=1-y
     xbuddy=1-x
     denom=denominator(alpha)
@@ -27,6 +36,12 @@ function VTRAIN(m,s,alpha, proof = 0)
                 println("no endpoints")
             end
             return false
+        end
+        if proof>=1
+            print("The following numberes assumed to have denominator: ")
+            println(denom)
+            println("Intervals: ")
+            display(convert_Int(endpoints*denom))
         end
         row,col = size(endpoints)
 
@@ -72,6 +87,9 @@ function VTRAIN(m,s,alpha, proof = 0)
         #display(mat_V)
         if length(mat_V) == 0
         #    print("                                                         no student distributions")
+            if proof >=1
+                println("No types of students, alpha ≤ ",alpha)
+            end
             return true
         end
         row_V, col_V = size(mat_V)
@@ -84,11 +102,10 @@ function VTRAIN(m,s,alpha, proof = 0)
         Y = numSmallPossible -1
         B = max(2//(kL2-alpha), 1//(Z+1-alpha))
         if proof >0
-            print("The following numberes assumed to have denominator: ")
-            println(denom)
+
             #display(convert_Int(endpoints/2))
-            println("kL1: ",Int64(kL1*denom),"  kL2: ",Int64(kL2*denom),"  kL3: ",Int64(kL3*denom))
-            println("Z: ",Int64(Z*denom)," Y: ",Y," a = ",a, " SS = ",SS)
+            println("kL1: ",Float64(kL1*denom),"  kL2: ",Float64(kL2*denom),"  kL3: ",Float64(kL3*denom))
+            println("Z: ",Float64(Z*denom)," Y: ",Y," a = ",a, " SS = ",SS)
             println()
             println("Let B = max(2/(kL2-alpha), 1/(Z+1-alpha))")
             println("--note: A and B do NOT have denominator ",denom)
@@ -309,6 +326,7 @@ function TRAIN(m,s,min_al = 1//2)
     end
     array=Array{Rational}(undef,0)
     alph = 1//3
+    append!(array,alph)
     num=1
     denom=3
     while denom<=m*s

@@ -2,6 +2,22 @@ include("helper_functions.jl")
 using JuMP
 using GLPK
 
+"""
+one_thrd is
+
+INPUTS:
+ * m -> number of muffins
+ * s -> number of students
+ * proof -> boolean:
+   (0 - No Proof)
+   (1 - Print Proof)
+
+OUTPUTS:
+ *
+ * Print proof (Depending on input (proof))
+
+"""
+
 function one_thrd(m,s, proof = 0)
     if proof >=1
         println("f(",m,", ",s,") ≥ 1/3 proof")
@@ -16,7 +32,10 @@ function one_thrd(m,s, proof = 0)
     if proof >=2
         println("Divide ",fixed_muffin," muffins into (1/3, 1/3, 1/3)\n")
     end
-
+    denom=lcm(s,3)
+    if proof >=1
+        println("Numbers assumed to have denominator: ",denom)
+    end
     new_muffin = m - fixed_muffin
 
     pieces = Int64(fixed_muffin * 3)
@@ -62,7 +81,7 @@ function one_thrd(m,s, proof = 0)
         if proof >=2
             print("Give student ",Int64(i)," -> (  ")
             for l = 1:length(student_share_1)
-                print(numerator(student_share_1[l]),"/",denominator(student_share_1[l]),"  ")
+                print(Float64(student_share_1[l]*denom),"  ")
             end
             println(")")
         end
@@ -73,7 +92,7 @@ function one_thrd(m,s, proof = 0)
         if proof >=2
             print("Give student ",Int64((value.(x)[1]+j))," -> (  ")
             for l = 1:length(student_share_2)
-                print(numerator(student_share_2[l]),"/",denominator(student_share_2[l]),"  ")
+                print(Float64(student_share_2[l]*denom),"  ")
             end
             println(")")
         end
@@ -136,7 +155,7 @@ function one_thrd(m,s, proof = 0)
         for i = 1:length(type1stud)
             print("Give student ",Int64(i)," -> (  ")
             for l = 1:length(type1stud[i])
-                print(numerator(type1stud[i][l]),"/",denominator(type1stud[i][l]),"  ")
+                print(Float64(type1stud[i][l]*denom),"  ")
             end
             println(")")
         end
@@ -144,7 +163,7 @@ function one_thrd(m,s, proof = 0)
         for j = 1:length(type2stud)
             print("Give student ",Int64((j+length(type1stud)))," -> (  ")
             for l = 1:length(type2stud[j])
-                print(numerator(type2stud[j][l]),"/",denominator(type2stud[j][l]),"  ")
+                print(Float64(type2stud[j][l]*denom),"  ")
             end
             println(")")
         end
@@ -231,7 +250,7 @@ function one_thrd(m,s, proof = 0)
             for i = 1:length(type1stud)
                 print("Give student ",Int64(i)," -> (  ")
                 for l = 1:length(type1stud[i])
-                    print(numerator(type1stud[i][l]),"/",denominator(type1stud[i][l]),"  ")
+                    print(Float64(type1stud[i][l]*denom),"  ")
                 end
                 println(")")
             end
@@ -240,7 +259,7 @@ function one_thrd(m,s, proof = 0)
             for j = 1:length(type2stud)
                 print("Give student ",Int64((j+length(type1stud)))," -> (  ")
                 for l = 1:length(type2stud[j])
-                    print(numerator(type2stud[j][l]),"/",denominator(type2stud[j][l]),"  ")
+                    print(Float64(type2stud[j][l]*denom),"  ")
                 end
                 println(")")
             end
@@ -279,7 +298,7 @@ function one_thrd(m,s, proof = 0)
         while i < length(distrib)
             print("Give ", distrib[i]," student(s)  -> (  ")
             for l = 1:length(distrib[i+1])
-                print(numerator(distrib[i+1][l]),"/",denominator(distrib[i+1][l]),"  ")
+                print(Float64(distrib[i+1][l]*denom),"  ")
             end
             println(")")
             i = i+2
@@ -303,7 +322,7 @@ function one_thrd(m,s, proof = 0)
         while i < length(distrib)
             print("Give ", distrib[i]," student(s)  -> (  ")
             for l = 1:length(distrib[i+1])
-                print(numerator(distrib[i+1][l]),"/",denominator(distrib[i+1][l]),"  ")
+                print(Float64(distrib[i+1][l]*denom),"  ")
             end
             println(")")
             i = i+2
