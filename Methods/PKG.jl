@@ -444,16 +444,16 @@ function FIND_ALL(max_m,min_s, max_s, fileKey=0, have_file = false, Scott_data =
       m3 = Array{Int64}(undef,0)
    end
    if Scott_data &&have_file || graphs || csv_file
-      c_dir =dirname(@__FILE__)*"\\..\\DATA\\"*day*"_"*string(fileKey) # current directory
+      c_dir =dirname(@__FILE__)*"/../DATA/"*day*"_"*string(fileKey) # current directory
    elseif have_file || graphs || csv_file
-      c_dir =dirname(@__FILE__)*"\\..\\DATA\\"*day*"_"*string(fileKey) # current directory
+      c_dir =dirname(@__FILE__)*"/../DATA/"*day*"_"*string(fileKey) # current directory
    end
    if have_file || graphs || csv_file
       mkdir(c_dir)
    end
 
    if Scott_data
-      df = open("D:\\Documents\\Muffins\\DATA\\scott_all.txt", "r")
+      df = open(dirname(@__FILE__)*"/../DATA/scott_all.txt", "r")
       if have_file
          file2 = open(c_dir * "\\not_match_SCOTT_.txt","w")
          println(file2,"---------------------------------------------")
