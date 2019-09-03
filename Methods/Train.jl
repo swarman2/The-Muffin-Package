@@ -90,7 +90,7 @@ function VTRAIN(m,s,alpha, proof = 0)
         end
         Z = m//s - 1 - (V-2)*(1-alpha)
 
-        LastSmall = endpoints[row-1,2]
+        #LastSmall = endpoints[row-1,2]
         permV=perm(V-1, row)
         possV = Vector{Vector{Int64}}()
         #Find the possible distribtions of muffins
@@ -182,8 +182,149 @@ function VTRAIN(m,s,alpha, proof = 0)
 
     else
         #println("V case")
-        return false
+        endpoints = GAP_int(m,s,alpha)
 
+        #this if never really happens
+        if endpoints == false
+            if proof >0
+                println("no endpoints")
+            end
+            if proof == 3
+                println(file,"no endpoints")
+                close(file)
+            end
+            return false
+        end
+        if proof>=1
+            print("The following numbers assumed to have denominator: ")
+            println(denom)
+            println("Intervals: ")
+            display(convert_Int(endpoints))
+        end
+        if proof == 3
+            print(file,"The following numbers assumed to have denominator: ")
+            println(file,denom)
+            println(file,"Intervals: ")
+            row,col = size(endpoints)
+            endpoints = convert_Int(endpoints)
+            for row_end = 1:row
+                for col_end = 1: col
+                    print(file,endpoints[row_end,col_end],"  ")
+                end
+                println(file)
+            end
+        end
+        row,col = size(endpoints)
+        if row <=2
+        #    println("used")
+            return true
+        end
+        kL1 = endpoints[1,1]//denom
+        kR1 = endpoints[1,2]//denom
+        kL2 = endpoints[2,1]// denom
+        kR2 = endpoints[row-1,2]//denom
+        kL3 = endpoints[row,1]// denom
+        kR3 = endpoints[row,2]//denom
+
+        LS = -(2*V*V*s - 2*V*s - 4*V*m + 2*m) #number of large shares
+        a = ceil(LS/(2m - (V-1)*s - (0.5)*LS))
+        if a%2 != 0
+            a=a+1
+        end
+        Z = m//s - 1 - (V-1)*(alpha)
+
+        LastSmall = endpoints[row-1,2]
+        permV=perm(V, row)
+        possV = Vector{Vector{Int64}}()
+        #Find the possible distribtions of muffins
+        for i=1:length(permV)
+            A=permV[i]
+            sum_1=0
+            sum_2=0
+            equal = true
+            #equal = false
+            for j =1:row
+                sum_1=sum_1+A[j]*endpoints[j,1]
+                sum_2=sum_2+A[j]*endpoints[j,2]
+                if A[j]!=0 && endpoints[j,1]!=endpoints[j,2]
+                    equal=false
+                end
+            end
+            if !equal && (sum_1 < (m//s)*denom) && (sum_2 > (m//s)*denom)
+                append!(possV, permV[i,:])
+            elseif equal && (sum_1 <= (m//s)*denom) && (sum_2 >= (m//s)*denom)
+                append!(possV, permV[i,:])
+            end
+        end
+        numLargePossible = 0
+        mat_V=transpose(hcat(possV...))
+        #display(mat_V)
+        if length(mat_V) == 0
+        #    print("                                                         no student distributions")
+            if proof >=1
+                println("No types of students, alpha ≤ ",alpha)
+            end
+            if proof == 3
+                println(file,"No types of students, alpha ≤ ",alpha)
+                close(file)
+            end
+
+            return true
+        end
+        row_V, col_V = size(mat_V)
+        for i = 1: row_V
+            max = sum(mat_V[i,:]) - mat_V[i,1]
+            if max >numLargePossible
+                numLargePossible = max
+            end
+        end
+        Y = numLargePossible -1
+        B = max(-1//(Z+alpha), 2//(1-alpha-kR2))
+        if proof >0
+
+            #display(convert_Int(endpoints/2))
+            println("kR1: ",Float64(kR1*denom),"  kR2: ",Float64(kR2*denom),"  kR3: ",Float64(kR3*denom))
+            println("Z: ",Float64(Z*denom)," Y: ",Y," a = ",a, " LS = ",LS)
+            println()
+            println("Let B = max(-1/(Z+alpha), 2/(1-alpha-kR2))")
+            println("--note: A and B do NOT have denominator ",denom)
+            println("B = ", numerator(B),"/",denominator(B))
+            println("=> A = ", numerator(B*alpha+1),"/",denominator(B*alpha+1))
+        end
+        if proof == 3
+            println(file,"kR1: ",Float64(kR1*denom),"  kR2: ",Float64(kR2*denom),"  kR3: ",Float64(kR3*denom))
+            println(file,"Z: ",Float64(Z*denom)," Y: ",Y," a = ",a, " LS = ",LS)
+            println(file,)
+            println(file,"Let B = max(-1/(Z+alpha), 2/(1-alpha-kR2))")
+            println(file,"--note: A and B do NOT have denominator ",denom)
+            println(file,"B = ", numerator(B),"/",denominator(B))
+            println(file,"=> A = ", numerator(B*alpha+1),"/",denominator(B*alpha+1))
+        end
+        A =B*alpha+1
+        eps = 10e-10
+        i=0
+        if proof >0
+            println()
+            println("--note: these numbers do NOT have denominator ",denom)
+            println("2 * floor(",numerator(B),"/",denominator(B),"*(",Float64(numerator(kR3)*(denom/denominator(kR3)))," - ",numerator(alpha),"/",denominator(alpha)," - eps)) < ",a)
+            println(2*floor(B*(kR3  - alpha - eps))," < ", a)
+        end
+        if proof == 3
+            println(file)
+            println(file,"--note: these numbers do NOT have denominator ",denom)
+            println(file,"2 * floor(",numerator(B),"/",denominator(B),"*(",Float64(numerator(kR3)*(denom/denominator(kR3)))," - ",numerator(alpha),"/",denominator(alpha)," - eps)) < ",a)
+            println(file,2*floor(B*(kR3  - alpha - eps))," < ", a)
+            close(file)
+        end
+        #assume D4 =>
+        if !( floor(B*kR3-B*alpha) < floor(B*(1-2*alpha)))
+            println("failed")
+        end
+        if 2*floor(B*(kR3  - alpha - eps)) < a
+            return true
+        else
+            return false
+        end
     end
 
 end
@@ -401,7 +542,7 @@ function TRAIN(m,s,min_al = 1//2)
     sort!(array)
     unique!(array)
     for i=1:length(array)
-        if array[i]==41//90
+        if array[i]==37//80
     #        println("*************  ",i)
         end
     end
