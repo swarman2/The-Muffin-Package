@@ -40,14 +40,14 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
         println()
         println("GAP PROOF OF f(",m,", ",s,") = ",numerator(alpha),"/",denominator(alpha))
         println("There are ",V,"-students and ",V-1,"-students")
-        println(sᵥ," ",V,"-shares  ",sᵥ₋₁," ",V-1,"-shares")
+        println(sᵥ," ",V,"-students  ",sᵥ₋₁," ",V-1,"-students")
         println("All numbers assumed to have denominator ",denom)
     end
     if proof >=3
         println(file)
         println(file,"GAP PROOF OF f(",m,", ",s,") = ",numerator(alpha),"/",denominator(alpha))
         println(file,"There are ",V,"-students and ",V-1,"-students")
-        println(file,sᵥ," ",V,"-shares  ",sᵥ₋₁," ",V-1,"-shares")
+        println(file,sᵥ," ",V,"-students  ",sᵥ₋₁," ",V-1,"-students")
         println(file,"All numbers assumed to have denominator ",denom)
     end
     if(V₋₁shares<Vshares)
@@ -91,12 +91,12 @@ function VGAP(m,s,alpha, proof=0, ret_endpts = false)
     Endpoints = transpose(Endpoints)
     #######
     if proof >=1
-        println("Intervals before Buddy-Match" )
+        println("Intervals before matching" )
         endpoints=convert_Int(endpoints)
         display(endpoints)
     end
     if proof >=3
-        println(file,"Intervals before Buddy-Match" )
+        println(file,"Intervals before matching" )
         endpoints=convert_Int(endpoints)
         row, col = size(endpoints)
         for i = 1:row
