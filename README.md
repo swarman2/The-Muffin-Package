@@ -11,7 +11,7 @@ This package goes with the book *The Mathematics of Muffins* by William Gasarch,
 To run this package you need [Julia](https://julialang.org/downloads/).
 
 # Installation
-Download and unzip all the files.To run a Julia file open the Julia REPL and type **include(*file_path*)**. Run *setup.jl* to download all the needed packages. To use the program run *user_interface.jl*.
+Download and unzip all the files. Open the Julia REPL by typing "julia". Then type include(*setup.jl*) to install dependencies and include(*user_interface.jl*) to run the program. 
 
 # How to use the package
 The menu will look like this
