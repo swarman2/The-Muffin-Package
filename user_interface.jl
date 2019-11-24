@@ -204,7 +204,7 @@ function main()
             end
         end
         if answer == "2"
-            fileKey = rand(1000:9999)
+            filename=""
 
             println()
             @printf("Enter max m: ")
@@ -312,10 +312,12 @@ function main()
             bool_txt = false
             scott_data = false
             bool_graph = false
+
             m_le_s2 = false
             stop_at_first = false
             time_limit = 1000
             while response != "0"
+                day = string(Dates.today())
                 println()
                 @label o_menu
                 println("Enter '0' to lock in your settings")
@@ -335,7 +337,7 @@ function main()
                 end
                 @printf("[2] Store in txt file")
                 if bool_txt
-                    @printf(" (run key = %i)",fileKey)
+                    print(" (file location = Data/"*filename*".txt)")
                 end
                 println()
 
@@ -477,6 +479,15 @@ function main()
                 end
                 if  "2" in r_arr
                     bool_txt = !bool_txt
+                    if filename == ""
+                        @label enter_filename
+                        print("Enter a file name: ")
+                        filename=readline()
+                        if occursin("/",filename) 
+                            println("Enter a file name without '/'")
+                            @goto enter_filename
+                        end
+                    end
                 end
                 if "3" in r_arr
                     scott_data = !scott_data
@@ -591,7 +602,7 @@ function main()
 
 
                 println()
-                FIND_ALL(m, min_s, max_s,fileKey, bool_txt, scott_data, bool_csv, bool_graph, time_limit, m_le_s2, stop_at_first )
+                FIND_ALL(m, min_s, max_s,filename, bool_txt, scott_data, bool_csv, bool_graph, time_limit, m_le_s2, stop_at_first )
         end
         if answer == "3"
             @printf("Enter m: ")
